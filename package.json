@@ -8,7 +8,7 @@
   },
   "scripts": {
     "deploy": "truffle migrate --reset --network bsctest",
-    "deployspec" : "truffle migrate --reset -f 3 to 3 --network bsctest",
+    "deployspec" : "truffle migrate --reset -f 4 to 4 --network bsctest",
     "verify0": "truffle run verify Mt0Token --network bsctest",
     "verify1": "truffle run verify Mt1Token --network bsctest",
     "verify_staking": "truffle run verify Staking --network bsctest",
