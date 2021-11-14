@@ -1,0 +1,24 @@
+{
+  "name": "staking_contract",
+  "version": "0.0.1",
+  "description": "Solidity code for staking with ERC20 & its test cases.",
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "staking"
+  ],
+  "author": "Simson",
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.0.0"
+  },
+  "devDependencies": {
+    "solidity-coverage": "^0.7.17",
+    "truffle-assertions": "^0.9.2"
+  },
+  "scripts": {
+    "compile": "truffle compile",
+    "test": "truffle test",
+    "coverage": "truffle run coverage --solcoverjs ./.solcover.js"
+  }
+}
