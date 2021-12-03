@@ -126,7 +126,7 @@ contract("RewardToken test", async accounts => {
     rval = await stakerContract.getAccTok({from: accounts[0]});
     console.log("acc: ", rval.toString());
 
-    await stakerContract.depositStaking(new BigNumber(10e18), {from: accounts[0], gas: gaslimit});
+    await stakerContract.deposit(new BigNumber(10e18), {from: accounts[0], gas: gaslimit});
     console.log("a1 staked 10 tokens");
 
     rval = await stakerContract.getAccTok({from: accounts[0]});
@@ -144,7 +144,7 @@ contract("RewardToken test", async accounts => {
     rval = await stakerContract.getAccTok({from: accounts[0]});
     console.log("acc: ", rval.toString());
 
-    await stakerContract.depositStaking(new BigNumber(15e18), {from: accounts[1], gas: gaslimit});
+    await stakerContract.deposit(new BigNumber(15e18), {from: accounts[1], gas: gaslimit});
     console.log("a2 staked 15 tokens");
 
     rval = await stakerContract.getAccTok({from: accounts[0]});
@@ -162,7 +162,7 @@ contract("RewardToken test", async accounts => {
     rval = await stakerContract.getAccTok({from: accounts[0]});
     console.log("acc: ", rval.toString());
 
-    await stakerContract.depositStaking(new BigNumber(8e18), {from: accounts[2], gas: gaslimit});
+    await stakerContract.deposit(new BigNumber(8e18), {from: accounts[2], gas: gaslimit});
     console.log("a3 staked 8 tokens");
 
     rval = await stakerContract.getAccTok({from: accounts[0]});
@@ -180,7 +180,7 @@ contract("RewardToken test", async accounts => {
     rval = await stakerContract.getAccTok({from: accounts[0]});
     console.log("acc: ", rval.toString());
 
-    await stakerContract.depositStaking(new BigNumber(33e18), {from: accounts[0], gas: gaslimit});
+    await stakerContract.deposit(new BigNumber(33e18), {from: accounts[0], gas: gaslimit});
     console.log("a1 staked 33 tokens");
 
     rval = await stakerContract.getAccTok({from: accounts[0]});
@@ -192,7 +192,7 @@ contract("RewardToken test", async accounts => {
     console.log("staker RD: ", rval.toString());
     console.log("");
 
-    await stakerContract.withdrawStaking(new BigNumber(17e18), {from: accounts[0], gas: gaslimit});
+    await stakerContract.withdraw(new BigNumber(17e18), {from: accounts[0], gas: gaslimit});
     console.log("a1 withdrew 17 tokens");
 
     rval = await stakerContract.getAccTok({from: accounts[0]});
@@ -204,7 +204,7 @@ contract("RewardToken test", async accounts => {
     console.log("staker RD: ", rval.toString());
     console.log("");
 
-    await stakerContract.withdrawStaking(new BigNumber(20e18), {from: accounts[0], gas: gaslimit});
+    await stakerContract.withdraw(new BigNumber(20e18), {from: accounts[0], gas: gaslimit});
     console.log("a1 withdrew 20 tokens");
 
     rval = await stakerContract.getAccTok({from: accounts[0]});

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
-import "../node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./SafeTransferERC20.sol";
 import "./RewardToken.sol";
 
@@ -93,8 +93,10 @@ contract Staker is Ownable, ReentrancyGuard {
         return _to.sub(_from);
     }
 
-    function depositStaking(uint256 _amount) public nonReentrant {
+    function deposit(uint256 _amount) public nonReentrant {
         UserInfo storage ui = userInfo[msg.sender];
+
+        require(_amount > 0, "Unable to deposit 0");
 
         UpdateUserInfo();
 
@@ -126,7 +128,7 @@ contract Staker is Ownable, ReentrancyGuard {
         return accumulatedTokenPerShare;
     }
 
-    function withdrawStaking(uint256 _amount) public nonReentrant {
+    function withdraw(uint256 _amount) public nonReentrant {
         UserInfo storage ui = userInfo[msg.sender];
 
         uint256 am = _amount;
