@@ -25,3 +25,48 @@ Recommended tools:
 - Truffle/Ganache
 - Remix
 - web3.js/ethers.js
+
+You create an empty project folder.
+
+```
+mkdir cryptol0g1c
+cd cryptol0g1c
+```
+
+At first, you create an empty project for smart contracts by truffle.
+
+```english
+truffle init
+```
+
+Then you will see the following items created in the folder.
+
+| name              | description                                                  |
+| ----------------- | ------------------------------------------------------------ |
+| truffle-config.js | Truffle configuration file                                   |
+| contracts         | Folder that contains solidity files                          |
+| migrations        | Folder that contains javascript files to migrate and deploy smart contracts |
+| test              | Folder that contains javascript files to test                |
+
+To make running environment to build and deploy smart contracts, run the following command
+
+```
+npm install @openzeppelin/contracts
+npm install big-number
+npm install web3
+npm install -g truffle
+```
+
+To compile smart contracts
+
+```
+truffle compile
+```
+
+To test smart contracts, you first run ganache for local chain.
+
+```
+npm install -g ganache-cli
+ganache-cli --port 7545
+```
+

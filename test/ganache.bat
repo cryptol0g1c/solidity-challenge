@@ -1,0 +1,1 @@
+ganache-cli --port 7545 -i 1337 -m "love useless install aerobic just pave flash marriage ethics tool trouble spy"
