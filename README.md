@@ -1,27 +1,51 @@
-# Challenge
-Create and deploy (locally) an ERC20 token and a staking contract that will distribute rewards to stakers over time. No need for an app or UI. You can reuse published or open source code, but you must indicate the source and what you have modified.
+# Solidity Challenge
 
-## Deliverable
-Create a PR from this repository and add all your codebase, tests, requirements and tool usage to your README.md
+ERC20 token and a staking contract that will distribute rewards to stakers over time.
 
-## User journey
-An account with some balance of the tokens can deposit them into the staking contract (which also has the tokens and distributes them over time). As the time goes by and blocks are being produced, this user should accumulate more of the tokens and can claim the rewards and withdraw the deposit.
+## Codebase
 
-## RewardToken.sol
-This contract defines an ERC20 token that will be used for staking/rewards. The owner should be able to mint the token, change reward rates and enable/disable withdraw fees (also modifiable)
+https://github.com/AnjiEco/bamboo-stake
 
-## Staker.sol
-This contract will get deployed with some tokens minted for the distribution to the stakers. And then, according to a schedule, allocate the reward tokens to addresses that deposited those tokens into the contract. The schedule is up to you, but you could say that every block 100 tokens are being distributed; then you'd take the allocated tokens and divide by the total balance of the deposited tokens so each depositor get's proportional share of the rewards. Ultimately, a user will deposit some tokens and later will be able to withdraw the principal amount plus the earned rewards. The following functions must be implemented: deposit(), withdraw()
+https://app.anji.eco/stake
 
-## Scoring criteria
-- launch ERC20 token
-- implement reward allocation logic
-- safe deposit/withdraw functions (avoid common attack vectors)
-- add test cases
+## How to deploy on local
 
-## Tools
-Recommended tools:
-- Hardhat
-- Truffle/Ganache
-- Remix
-- web3.js/ethers.js
+### `npm install`
+This will install dependency modules in the project.
+
+### `npm run local-node`
+This will run a local node via hardhat.
+
+### `npm run deploy:local`
+This will deploy ERC20 and Staking contracts on local.
+
+## How to deploy on Ropsten
+
+### `npm install`
+This will install dependency modules in the project.
+
+### `npm run deploy`
+This will deploy ERC20 and Staking contracts on Ropsten.
+
+## How to test
+
+### `npm install`
+This will install dependency modules in the project.
+
+### `npm run local-node`
+This will run a local node via hardhat.
+
+### `npm run test`
+This will test smart contracts by minting, depositing, withdrwing. This will check balances and reward before and after when they mint, deposit & withdraw.
+
+#### Testcase
+
+1) Mint 10000 tokens to `Account 1`, `Account 2`, `Account 3`.
+Mint 500000 tokens to `Staking Contract`.
+2) Deposit 100 tokens from `Account 1`.
+3) After one block, check if it gets 100 reward tokens.
+4) Deposit 100 tokens from `Account 2`.
+5) After one block check it gets 50 reward tokens. And `Account 1` will get more rewards so it will be 100 * blocksSpent + 50.
+6) Deposit 200 tokens from `Account 3`.
+7) After one block check it gets 50 reward tokens and other accounts get 25 more rewards....
+8) Withdraw on `Account 3` and check how much returnes from staking contract.
