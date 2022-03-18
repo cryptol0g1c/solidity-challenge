@@ -1,0 +1,38 @@
+{
+  "name": "cryptologic",
+  "version": "1.0.0",
+  "description": "Create and deploy (locally) an ERC20 token and a staking contract that will distribute rewards to stakers over time. No need for an app or UI. You can reuse published or open source code, but you must indicate the source and what you have modified.",
+  "main": "index.js",
+  "scripts": {
+    "coverage": "npx truffle run coverage",
+    "ganache": "npx ganache-cli",
+    "test": "npx truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://fomobot@github.com/fomobot/solidity-challenge.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fomobot/solidity-challenge/issues"
+  },
+  "homepage": "https://github.com/fomobot/solidity-challenge#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.5.0",
+    "@openzeppelin/contracts-upgradeable": "^4.5.2",
+    "@openzeppelin/truffle-upgrades": "^1.14.0",
+    "@truffle/hdwallet-provider": "^2.0.4",
+    "bignumber.js": "^9.0.2",
+    "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
+    "chai-bignumber": "^3.0.0",
+    "chai-bn": "^0.3.1",
+    "ganache-cli": "^6.12.2",
+    "solidity-coverage": "^0.7.20",
+    "truffle": "^5.5.5",
+    "truffle-contract-size": "^2.0.1",
+    "truffle-plugin-verify": "^0.5.24",
+    "truffle-test-utils": "^0.1.0"
+  }
+}
