@@ -25,3 +25,26 @@ Recommended tools:
 - Truffle/Ganache
 - Remix
 - web3.js/ethers.js
+# Submission
+
+## Dependencies
+Openzeppelin contracts, utilities and test helpers.
+Chai / BigNumber for testing framework
+truffle framework
+
+## Usage instructions
+```
+# Install project dependencies
+npm install
+
+# Run local blockchain service
+npm run ganache
+
+# Deploy 
+npm run migrate
+
+# Run test
+npm run test
+
+# Run coverage
+```

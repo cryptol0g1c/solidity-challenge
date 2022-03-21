@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -34,6 +34,15 @@ contract Staker is Initializable, OwnableUpgradeable {
     rewardToken = IRewardToken(_rewardToken);
   }
 
+  /// @notice calculates the amount of tokens the contracts owes an user
+  /// @param _account address of the user with the stake
+  /// @return reward token amount
+  function calculateRewards(address _account) public view returns(uint256) {
+    return _calculateRewards(_account);
+  }
+
+  /// @notice calculates the amount of tokens the contracts owes an user
+  /// @return reward token amount
   function _calculateRewards(address _account) internal view returns(uint256) {
     return rewardToken.rewardRate().
       mul(block.number - stakeTime[_account]).
@@ -58,7 +67,7 @@ contract Staker is Initializable, OwnableUpgradeable {
 
   }
 
-  /// @notice withdraws staked tokens and rewards
+  /// @notice withdraws staked tokens and rewards from the sender
   function withdraw() public {
     uint256 _stakeAmount = stakeAmount[msg.sender];
     require(_stakeAmount != 0, "No stakes available");
