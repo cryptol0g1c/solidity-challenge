@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title Interface of the Registry contract for DAO SC
- * @notice Create and manage DAO contracts
-*/
+ * @title Interface of the Reward contract
+ * @dev ERC20 token that will be used for staking/rewards
+ */
 interface IRewardToken is IERC20 {
     /**
      * @notice Mint token by owner
