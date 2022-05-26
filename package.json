@@ -4,12 +4,15 @@
     "node": "npx hardhat node",
     "compile": "hardhat compile",
     "doc": "hardhat docgen",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "deploy:development": "npx hardhat run --network localhost scripts/deploy.js",
+    "deploy:rinkeby": "npx hardhat run ./scripts/deploy.js --network rinkeby"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.6",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "chai": "^4.3.6",
+    "dotenv": "^16.0.1",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.8",
     "hardhat": "^2.9.6"

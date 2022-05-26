@@ -25,3 +25,18 @@ Recommended tools:
 - Truffle/Ganache
 - Remix
 - web3.js/ethers.js
+## Usage instructions
+
+# Install project dependencies
+npm install
+# Run local blockchain service
+npm run node
+# Compile smart contracts
+npm run compile
+# Generate document of the smart contracts
+npm run doc
+# Deploy 
+npm run deploy:development
+npm run deploy:rinkeby
+# Run test
+npm run test

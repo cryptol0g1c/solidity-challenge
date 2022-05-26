@@ -48,7 +48,7 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
     /**
      * @notice Number to cover the big number calculation of the reward
      */
-    uint256 private constant REWARDS_PRECISION = 1e18;
+    uint256 private constant REWARDS_PRECISION = 1e36;
 
     /**
      * @notice Number to cover the big number calculation of the withdrawal fee
@@ -68,11 +68,11 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
      * @notice Deposit tokens to generate reward
      * @param amount The number of tokens to stake
      */
-    function deposit(uint256 amount) external override nonReentrant {
+    function deposit(uint256 amount) external override {
         require(amount > 0, "Deposit amount can't be zero");
         StakerInfo storage staker = stakers[msg.sender];
 
-        harvestRewards();
+        harvestRewards(false);
 
         staker.amount = staker.amount + amount;
         staker.rewardDebt = staker.amount * accumulatedRewardsPerShare / REWARDS_PRECISION;
@@ -92,20 +92,23 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
      * @dev This will withdraw principal amount plus the earned rewards
      * @dev The fee will go to the treasury address
      */
-    function withdraw() external override nonReentrant {
+    function withdraw() external override {
         StakerInfo storage staker = stakers[msg.sender];
         uint256 amount = staker.amount;
         require(amount > 0, "Withdraw amount can't be zero");
 
-        harvestRewards();
+        harvestRewards(false);
 
+        uint256 unclaimedReward = staker.unclaimedReward;
         staker.amount = 0;
+        staker.unclaimedReward = 0;
         staker.rewardDebt = staker.amount * accumulatedRewardsPerShare / REWARDS_PRECISION;
 
         tokensStaked = tokensStaked - amount;
 
         emit Withdraw(msg.sender, amount);
 
+        amount += unclaimedReward;
         uint256 withdrawalFee;
         if (rewardToken.feeStatus()) {
             withdrawalFee = amount * rewardToken.feeRate() / FEE_PRECISION;
@@ -115,21 +118,24 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
             address(msg.sender),
             amount - withdrawalFee
         );
-        rewardToken.safeTransfer(
-            treasury,
-            withdrawalFee
-        );
+        if (withdrawalFee > 0) {
+            rewardToken.safeTransfer(
+                treasury,
+                withdrawalFee
+            );
+        }
     }
 
     /**
-     * @notice Calculate and withdraw the reward
-     * @dev This will calculate the reward amount and withdraw them
+     * @notice Calculate and charge the reward
+     * @dev This will calculate the reward amount and add them to unclaimed
+     * @param claim Flag to withdraw or charge
      */
-    function harvestRewards() public nonReentrant {
+    function harvestRewards(bool claim) public nonReentrant {
         updateRewards();
         StakerInfo storage staker = stakers[msg.sender];
         uint256 rewardsToHarvest = (staker.amount * accumulatedRewardsPerShare / REWARDS_PRECISION) - staker.rewardDebt;
-        if (rewardsToHarvest == 0) {
+        if (rewardsToHarvest == 0 && !claim) {
             staker.rewardDebt = staker.amount * accumulatedRewardsPerShare / REWARDS_PRECISION;
             return;
         }
@@ -137,7 +143,27 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
         staker.rewardDebt = staker.amount * accumulatedRewardsPerShare / REWARDS_PRECISION;
 
         emit HarvestRewards(msg.sender, rewardsToHarvest);
-        rewardToken.safeTransfer(msg.sender, rewardsToHarvest);
+        if (claim) {
+            uint256 claimableAmt = staker.unclaimedReward + rewardsToHarvest;
+            staker.unclaimedReward = 0;
+            uint256 withdrawalFee;
+            if (rewardToken.feeStatus()) {
+                withdrawalFee = claimableAmt * rewardToken.feeRate() / FEE_PRECISION;
+            }
+
+            rewardToken.safeTransfer(
+                address(msg.sender),
+                claimableAmt - withdrawalFee
+            );
+            if (withdrawalFee > 0) {
+                rewardToken.safeTransfer(
+                    treasury,
+                    withdrawalFee
+                );
+            }
+        } else {
+            staker.unclaimedReward += rewardsToHarvest;
+        }
     }
 
     /**

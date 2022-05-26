@@ -12,11 +12,13 @@ interface IStaker {
      * @member amount The number of tokens user staked
      * @member rewards The number of reward user can harvest
      * @member rewardDebt The number of reward user does not have the right to claim
+     * @member unclaimedReward The number of reward user did not claim yet
      */
     struct StakerInfo {
         uint256 amount;
         uint256 rewards;
         uint256 rewardDebt;
+        uint256 unclaimedReward;
     }
 
     /**
