@@ -12,6 +12,10 @@ contract RewardToken is ERC20, Ownable {
     uint256 public rewardRate;
     uint256 public withdrawFee;
 
+    event RewardRateUpdated(uint256);
+    event WithdrawFeeToggled(bool);
+    event WithdrawFeeUpdated(uint256);
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -25,11 +29,51 @@ contract RewardToken is ERC20, Ownable {
         withdrawFee = _withdrawFee;
     }
         
-    /** @dev It makes avaliable ERC20 _mint function for external calls.
-     *
-     */
+    /** @dev It makes avaliable he ERC20 _mint function for external calls.
+    *
+    * Requirements:
+    *
+    * - only the owner can call this function .
+    */
+
     function mint(address _account, uint256 _amount) external onlyOwner {
         _mint(_account, _amount);
     }
 
+
+    /** @dev It sets the fee for withdrawals.
+    *
+    * Requirements:
+    *
+    * - only the owner can call this function .
+    */
+    function setWithdrawFee(uint256 _withrawFee) external onlyOwner {
+        require(_withrawFee > 0, "Withdraw fee cant' be 0");
+        withdrawFee = _withrawFee;
+        emit WithdrawFeeUpdated(withdrawFee);
+    }
+
+
+    /** @dev It toggles the fee for withdrawals.
+    *
+    * Requirements:
+    *
+    * - only the owner can call this function .
+    */
+    function enableWithdrawFee(bool _enabled) external onlyOwner {
+        withdrawFeeEnabled = _enabled;
+        emit WithdrawFeeToggled(withdrawFeeEnabled);
+    }
+
+    /** @dev It sets the value of the reward per block.
+    *
+    * Requirements:
+    *
+    * - only the owner can call this function .
+    */
+    function setRewardRate(uint256 _rewardRate) external onlyOwner {
+        require(_rewardRate> 0, "Reward rate cant' be 0");
+        rewardRate = _rewardRate;
+        emit RewardRateUpdated(rewardRate);
+    }
 }
