@@ -4,7 +4,7 @@ import { RewardToken } from "../typechain";
 import { parseEther } from "ethers/lib/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe("RewardToken", () => {
+describe.only("RewardToken", () => {
   const name = "RewardToken";
   const symbol = "RWD";
   const withdrawFee = parseEther("10");
@@ -70,11 +70,16 @@ describe("RewardToken", () => {
       );
     });
 
-    it("Should change withdraw fee and emit event", async () => {
+    it("Should emit event", async () => {
       const withdrawFee = parseEther("3");
       await expect(rewardToken.setWithdrawFee(withdrawFee))
         .to.emit(rewardToken, "WithdrawFeeUpdated")
         .withArgs(withdrawFee);
+    });
+    it("Should change withdraw fee", async () => {
+      const withdrawFee = parseEther("3");
+      await rewardToken.setWithdrawFee(withdrawFee);
+      expect(await rewardToken.withdrawFee()).to.equal(withdrawFee);
     });
   });
 
@@ -84,10 +89,15 @@ describe("RewardToken", () => {
         .reverted;
     });
 
-    it("Should toggle withdraw fee", async () => {
+    it("Should emit event", async () => {
       await expect(rewardToken.enableWithdrawFee(false))
         .to.emit(rewardToken, "WithdrawFeeToggled")
         .withArgs(false);
+    });
+
+    it("Should toggle withdraw fee", async () => {
+      await rewardToken.enableWithdrawFee(false);
+      expect(await rewardToken.withdrawFeeEnabled()).to.equal(false);
     });
   });
 
@@ -103,11 +113,16 @@ describe("RewardToken", () => {
       );
     });
 
-    it("Should change reward rate and emit event", async () => {
+    it("Should emit event", async () => {
       const rewardRate = parseEther("3");
       await expect(rewardToken.setRewardRate(rewardRate))
         .to.emit(rewardToken, "RewardRateUpdated")
         .withArgs(rewardRate);
+    });
+    it("Should change reward rate", async () => {
+      const rewardRate = parseEther("3");
+      await rewardToken.setRewardRate(rewardRate);
+      expect(await rewardToken.rewardRate()).to.equal(rewardRate);
     });
   });
 });

@@ -7,7 +7,7 @@ import "./RewardToken.sol";
 contract Staker {
     using SafeERC20 for RewardToken;
     
-    RewardToken private rewardToken;
+    RewardToken public rewardToken;
     uint256 public total;
     uint256 public lastPaidBlock;
     uint256 public totalReward;
@@ -36,6 +36,7 @@ contract Staker {
     * - user can only have one active stake .
     */
     function deposit(uint256 _amount) external {
+        require(_amount>0, "amount should can't be 0");
         require(stakers[msg.sender].stakeAmount==0, "address already staking");
         _calculateReward();
         total += _amount; 
