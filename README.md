@@ -2,7 +2,7 @@
 
 ## Tools
 
-Hardhat, openZeppelin
+Hardhat, openZeppelin: ERC20, Ownable, SafeERC29
 
 The reward distribution algorithm was based on:
 
