@@ -8,11 +8,31 @@ The reward distribution algorithm was based on:
 
 [Scalable Reward Distribution on the Ethereum Blockchain](https://uploads-ssl.webflow.com/5ad71ffeb79acc67c8bcdaba/5ad8d1193a40977462982470_scalable-reward-distribution-paper.pdf)
 
+## Working with this repo
+
+First install the dependencies:
+
+```shell
+npm install
+```
+
+Then test the smart contracts with:
+
+```shell
+npx hardhat test
+```
+
+For deploying:
+
+```shell
+npx hardhat run scripts/deploy.ts
+```
+
 ## Notes
 
-I think that the reward rate, withdraw fee and withdraw toggle should be on the Stake.sol rather than RewardToken.sol. This information belongs to the Stake.sol domain.
+I think that the reward rate, withdraw fee and withdraw toggle should be on the Stake.sol rather than RewardToken.sol.
 
-The reward rate should be on the staker.sol since each time it is modified the reward until the current block should be calculated, otherwise the reward could not match the expected output on withdraws. Moving setRewardRate to Stake.sol solves this issue updating the calculated reward each time the setRewardRate function is called.
+The reward rate should be on the staker.sol. Each time it's modified the reward should be calculated until the current block, otherwise the reward could not match the expected output on withdraws. Moving setRewardRate to Stake.sol solves this issue updating the calculated reward each time the setRewardRate function is called.
 
 With enough time the Staker.sol could run out of token to pay the withdraws so once we mint tokens to the contract address we should calculate for how long we want it to be able to pay the reward per block
 

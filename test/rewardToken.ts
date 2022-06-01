@@ -45,13 +45,13 @@ describe("RewardToken", () => {
   });
 
   describe("mint", () => {
-    it("Should be avaliable for the owner only", async () => {
+    it("Should be avaliable only for the owner", async () => {
       await expect(
         rewardToken.connect(acc1).mint(acc1.address, parseEther("100"))
       ).to.be.reverted;
     });
 
-    it("Should mint the amount to the specified address", async () => {
+    it("Should add the amount to the account selected", async () => {
       await rewardToken.mint(acc1.address, parseEther("100"));
       const balance = await rewardToken.balanceOf(acc1.address);
       expect(balance).to.equal(parseEther("100"));
@@ -59,24 +59,24 @@ describe("RewardToken", () => {
   });
 
   describe("setWithdrawFee", () => {
-    it("Should be avaliable for the owner only", async () => {
+    it("Should be avaliable only for the owner", async () => {
       await expect(rewardToken.connect(acc1).setWithdrawFee(parseEther("100")))
         .to.be.reverted;
     });
 
-    it("Shouldn't let setting withdraw fee to 0 ", async () => {
+    it("Shouldn't allow withdraw fee to be 0 ", async () => {
       await expect(rewardToken.setWithdrawFee(0)).to.be.revertedWith(
         "Withdraw fee cant' be 0"
       );
     });
 
-    it("Should emit event", async () => {
+    it("Should emit WithdrawFeeUpdated event with the withdraw fee", async () => {
       const withdrawFee = parseEther("3");
       await expect(rewardToken.setWithdrawFee(withdrawFee))
         .to.emit(rewardToken, "WithdrawFeeUpdated")
         .withArgs(withdrawFee);
     });
-    it("Should change withdraw fee", async () => {
+    it("Should change the withdraw fee", async () => {
       const withdrawFee = parseEther("3");
       await rewardToken.setWithdrawFee(withdrawFee);
       expect(await rewardToken.withdrawFee()).to.equal(withdrawFee);
@@ -84,42 +84,42 @@ describe("RewardToken", () => {
   });
 
   describe("enableWithdrawFee", () => {
-    it("Should be avaliable for the owner only", async () => {
+    it("Should be avaliable only for the owner ", async () => {
       await expect(rewardToken.connect(acc1).enableWithdrawFee(false)).to.be
         .reverted;
     });
 
-    it("Should emit event", async () => {
+    it("Should emit event WithdrawFeeToggled with enabled value", async () => {
       await expect(rewardToken.enableWithdrawFee(false))
         .to.emit(rewardToken, "WithdrawFeeToggled")
         .withArgs(false);
     });
 
-    it("Should toggle withdraw fee", async () => {
+    it("Should toggle the withdraw fee", async () => {
       await rewardToken.enableWithdrawFee(false);
       expect(await rewardToken.withdrawFeeEnabled()).to.equal(false);
     });
   });
 
   describe("setRewardRate", () => {
-    it("Should be avaliable for the owner only", async () => {
+    it("Should be avaliable only for the owner ", async () => {
       await expect(rewardToken.connect(acc1).setRewardRate(parseEther("100")))
         .to.be.reverted;
     });
 
-    it("Shouldn't let setting reward rate to 0 ", async () => {
+    it("Shouldn't allow reward rate to 0 ", async () => {
       await expect(rewardToken.setRewardRate(0)).to.be.revertedWith(
         "Reward rate cant' be 0"
       );
     });
 
-    it("Should emit event", async () => {
+    it("Should emit event RewardRateUpdated with the reward rate", async () => {
       const rewardRate = parseEther("3");
       await expect(rewardToken.setRewardRate(rewardRate))
         .to.emit(rewardToken, "RewardRateUpdated")
         .withArgs(rewardRate);
     });
-    it("Should change reward rate", async () => {
+    it("Should change the reward rate", async () => {
       const rewardRate = parseEther("3");
       await rewardToken.setRewardRate(rewardRate);
       expect(await rewardToken.rewardRate()).to.equal(rewardRate);
