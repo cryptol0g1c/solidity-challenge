@@ -261,7 +261,7 @@ describe.only("RewardToken", () => {
         balanceAfter.sub(balanceBefore)
       );
     });
-    it.only("Should update the total stake", async () => {
+    it("Should update the total stake", async () => {
       await rewardToken.enableWithdrawFee(true);
       await staker.connect(acc1).deposit(parseEther("100"));
       const balanceBefore = await rewardToken.balanceOf(owner.address);
