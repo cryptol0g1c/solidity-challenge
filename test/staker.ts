@@ -4,20 +4,22 @@ import { RewardToken, Staker } from "../typechain";
 import { parseEther } from "ethers/lib/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe("RewardToken", () => {
+describe.only("RewardToken", () => {
   const name = "RewardToken";
   const symbol = "RWD";
-  const withdrawFee = parseEther("10");
-  const withdrawFeeEnabled = true;
+  const withdrawFee = parseEther("2");
+  const withdrawFeeEnabled = false;
   const TOTAL_REWARD_PRECISION = parseEther("1");
   const rewardRate = parseEther("10");
   let rewardToken: RewardToken;
   let staker: Staker;
+  let owner: SignerWithAddress;
   let acc1: SignerWithAddress;
   let acc2: SignerWithAddress;
   let acc3: SignerWithAddress;
+  let acc4: SignerWithAddress;
   before(async () => {
-    [, acc1, acc2, acc3] = await ethers.getSigners();
+    [owner, acc1, acc2, acc3, acc4] = await ethers.getSigners();
   });
 
   beforeEach(async () => {
@@ -72,10 +74,10 @@ describe("RewardToken", () => {
       expect(await staker.totalStake()).to.equal(parseEther("100"));
     });
     it("Should remove deposited amount from acc1 RewardToken balance ", async () => {
-      const balancePrev = await rewardToken.balanceOf(acc1.address);
+      const balanceBefore = await rewardToken.balanceOf(acc1.address);
       await staker.connect(acc1).deposit(parseEther("100"));
       const balanceAfter = await rewardToken.balanceOf(acc1.address);
-      expect(balancePrev).to.equal(balanceAfter.add(parseEther("100")));
+      expect(balanceBefore).to.equal(balanceAfter.add(parseEther("100")));
     });
     it("Should emit Deposit event", async () => {
       await expect(staker.connect(acc1).deposit(parseEther("100")))
@@ -93,23 +95,22 @@ describe("RewardToken", () => {
       expect(stakerAcc1.stakeAmount).to.equal(parseEther("100"));
     });
     it("Should update the latestPaidBlock", async () => {
-      const lastPaidBlockPrev = await staker.lastPaidBlock();
+      const lastPaidBlockBefore = await staker.lastPaidBlock();
       await staker.connect(acc1).deposit(parseEther("100"));
       const lastPaidBlockAfter = await staker.lastPaidBlock();
-      console.log("bloques", await staker.totalReward());
       expect(lastPaidBlockAfter.toNumber()).to.be.above(
-        lastPaidBlockPrev.toNumber()
+        lastPaidBlockBefore.toNumber()
       );
     });
     it("Should update correctly the totalReward for the first time", async () => {
       await staker.connect(acc1).deposit(parseEther("100"));
-      const lastPaidBlockPrev = await staker.lastPaidBlock();
+      const lastPaidBlockBefore = await staker.lastPaidBlock();
       const totalStake = await staker.totalStake();
       await staker.connect(acc2).deposit(parseEther("50"));
       const lastPaidBlockAfter = await staker.lastPaidBlock();
       const totalReward = await staker.totalReward();
       const expectedReward = lastPaidBlockAfter
-        .sub(lastPaidBlockPrev)
+        .sub(lastPaidBlockBefore)
         .mul(rewardRate)
         .mul(TOTAL_REWARD_PRECISION)
         .div(totalStake);
@@ -126,13 +127,13 @@ describe("RewardToken", () => {
       await staker.connect(acc1).deposit(parseEther("100"));
       await staker.connect(acc2).deposit(parseEther("100"));
       const totalRewardprev = await staker.totalReward();
-      const lastPaidBlockPrev = await staker.lastPaidBlock();
+      const lastPaidBlockBefore = await staker.lastPaidBlock();
       const totalStake = await staker.totalStake();
       await staker.connect(acc3).deposit(parseEther("50"));
       const lastPaidBlockAfter = await staker.lastPaidBlock();
       const totalReward = await staker.totalReward();
       const expectedReward = lastPaidBlockAfter
-        .sub(lastPaidBlockPrev)
+        .sub(lastPaidBlockBefore)
         .mul(rewardRate)
         .mul(TOTAL_REWARD_PRECISION)
         .div(totalStake);
@@ -150,7 +151,7 @@ describe("RewardToken", () => {
       await staker.connect(acc1).deposit(parseEther("100"));
       await staker.connect(acc2).deposit(parseEther("100"));
       const totalRewardprev = await staker.totalReward();
-      const lastPaidBlockPrev = await staker.lastPaidBlock();
+      const lastPaidBlockBefore = await staker.lastPaidBlock();
       const totalStake = await staker.totalStake();
       const newRewardrate = parseEther("1");
       await rewardToken.setRewardRate(newRewardrate);
@@ -158,11 +159,115 @@ describe("RewardToken", () => {
       const lastPaidBlockAfter = await staker.lastPaidBlock();
       const totalReward = await staker.totalReward();
       const expectedReward = lastPaidBlockAfter
-        .sub(lastPaidBlockPrev)
+        .sub(lastPaidBlockBefore)
         .mul(newRewardrate)
         .mul(TOTAL_REWARD_PRECISION)
         .div(totalStake);
       expect(expectedReward.add(totalRewardprev)).to.be.equal(totalReward);
+    });
+  });
+  describe("Withdraw", () => {
+    beforeEach(async () => {
+      rewardToken.mint(staker.address, parseEther("10000000000"));
+      rewardToken.mint(acc1.address, parseEther("100"));
+      await rewardToken
+        .connect(acc1)
+        .approve(staker.address, parseEther("100"));
+      rewardToken.mint(acc2.address, parseEther("100"));
+      await rewardToken
+        .connect(acc2)
+        .approve(staker.address, parseEther("100"));
+      rewardToken.mint(acc3.address, parseEther("100"));
+      await rewardToken
+        .connect(acc3)
+        .approve(staker.address, parseEther("100"));
+    });
+
+    it("Shouldn't be executable by accounts with no stake", async () => {
+      await expect(staker.connect(acc4).withdraw()).to.be.revertedWith(
+        "address has no staking"
+      );
+    });
+    it("Should update the total stake", async () => {
+      await staker.connect(acc1).deposit(parseEther("100"));
+      const totalStakeBefore = await staker.totalStake();
+      await staker.connect(acc1).withdraw();
+      const totalStakeAfter = await staker.totalStake();
+      expect(totalStakeBefore).to.be.equal(
+        totalStakeAfter.add(parseEther("100"))
+      );
+    });
+    it("Should delete staker info", async () => {
+      await staker.connect(acc1).deposit(parseEther("100"));
+      await staker.connect(acc1).withdraw();
+      const stakerAcc1 = await staker.stakers(acc1.address);
+      expect(stakerAcc1.rewardSnapShot).to.be.equal(0);
+      expect(stakerAcc1.stakeAmount).to.be.equal(0);
+    });
+    it("Should update correctly the totalReward", async () => {
+      await staker.connect(acc1).deposit(parseEther("100"));
+      const lastPaidBlockBefore = await staker.lastPaidBlock();
+      const totalStake = await staker.totalStake();
+      await staker.connect(acc1).withdraw();
+      const lastPaidBlockAfter = await staker.lastPaidBlock();
+      const totalReward = await staker.totalReward();
+      const expectedReward = lastPaidBlockAfter
+        .sub(lastPaidBlockBefore)
+        .mul(rewardRate)
+        .mul(TOTAL_REWARD_PRECISION)
+        .div(totalStake);
+      expect(expectedReward).to.be.equal(totalReward);
+    });
+    it("Should transfer the correct amount to acc2", async () => {
+      // - deposit 100 token with rate of 10 tokens per block
+      // - 1rst block staking 5 tokens
+      // - 2nd  block staking 3.3... tokens
+      // - withdaw 108.3... tokens
+      await staker.connect(acc1).deposit(parseEther("100"));
+      await staker.connect(acc2).deposit(parseEther("100")); // 1
+      await staker.connect(acc3).deposit(parseEther("100")); // 2
+      const stakerAcc2 = await staker.stakers(acc2.address);
+      const balanceBefore = await rewardToken.balanceOf(acc2.address);
+      await staker.connect(acc2).withdraw();
+      const balanceAfter = await rewardToken.balanceOf(acc2.address);
+      const totalReward = await staker.totalReward();
+      const expectedTransfer = totalReward
+        .sub(stakerAcc2.rewardSnapShot)
+        .add(1)
+        .mul(stakerAcc2.stakeAmount)
+        .div(TOTAL_REWARD_PRECISION);
+      expect(expectedTransfer).to.be.equal(balanceAfter.sub(balanceBefore));
+    });
+    it("Should transfer the correct amount to acc2 substracting the withdraw fee", async () => {
+      // - deposit 100 token with rate of 10 tokens per block
+      // - 1rst block staking 5 tokens
+      // - 2nd  block staking 3.3... tokens
+      // - withdaw 108.3 minus fee (2)... tokens
+      await rewardToken.enableWithdrawFee(true);
+      await staker.connect(acc1).deposit(parseEther("100"));
+      await staker.connect(acc2).deposit(parseEther("100")); // 1
+      await staker.connect(acc3).deposit(parseEther("100")); // 2
+      const stakerAcc2 = await staker.stakers(acc2.address);
+      const balanceBefore = await rewardToken.balanceOf(acc2.address);
+      await staker.connect(acc2).withdraw();
+      const balanceAfter = await rewardToken.balanceOf(acc2.address);
+      const totalReward = await staker.totalReward();
+      const expectedTransfer = totalReward
+        .sub(stakerAcc2.rewardSnapShot)
+        .add(1)
+        .mul(stakerAcc2.stakeAmount)
+        .div(TOTAL_REWARD_PRECISION);
+      expect(expectedTransfer.sub(withdrawFee)).to.be.equal(
+        balanceAfter.sub(balanceBefore)
+      );
+    });
+    it.only("Should update the total stake", async () => {
+      await rewardToken.enableWithdrawFee(true);
+      await staker.connect(acc1).deposit(parseEther("100"));
+      const balanceBefore = await rewardToken.balanceOf(owner.address);
+      await staker.connect(acc1).withdraw();
+      const balanceAfter = await rewardToken.balanceOf(owner.address);
+      expect(withdrawFee).to.be.equal(balanceAfter.sub(balanceBefore));
     });
   });
 });

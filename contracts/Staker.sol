@@ -62,7 +62,7 @@ contract Staker {
         }
         _calculateReward();
         totalStake -= stakers[msg.sender].stakeAmount; 
-        uint256 toTransfer = (totalReward - stakers[msg.sender].rewardSnapShot+1)*stakers[msg.sender].stakeAmount - withdrawFee;
+        uint256 toTransfer = (totalReward - stakers[msg.sender].rewardSnapShot+1)*stakers[msg.sender].stakeAmount/TOTAL_REWARD_PRECISION - withdrawFee;
         delete stakers[msg.sender];
         rewardToken.safeTransfer(msg.sender,toTransfer);
         if (withdrawFee>0) {
