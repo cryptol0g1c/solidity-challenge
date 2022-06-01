@@ -4,7 +4,7 @@ import { RewardToken } from "../typechain";
 import { parseEther } from "ethers/lib/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe.only("RewardToken", () => {
+describe("RewardToken", () => {
   const name = "RewardToken";
   const symbol = "RWD";
   const withdrawFee = parseEther("10");

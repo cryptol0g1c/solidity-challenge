@@ -5,10 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./RewardToken.sol";
 
 contract Staker {
+
+    uint256 private constant TOTAL_REWARD_PRECISION = 1e18;
+
     using SafeERC20 for RewardToken;
     
     RewardToken public rewardToken;
-    uint256 public total;
+    uint256 public totalStake;
     uint256 public lastPaidBlock;
     uint256 public totalReward;
 
@@ -39,9 +42,10 @@ contract Staker {
         require(_amount>0, "amount should can't be 0");
         require(stakers[msg.sender].stakeAmount==0, "address already staking");
         _calculateReward();
-        total += _amount; 
+        totalStake += _amount; 
         stakers[msg.sender] = StakerData(_amount,totalReward);
         rewardToken.safeTransferFrom(msg.sender,address(this),_amount);
+        emit Deposit(msg.sender,_amount);
     }
 
     /** @dev withdraws the staked amount plus rewards.
@@ -57,20 +61,21 @@ contract Staker {
             withdrawFee = rewardToken.withdrawFee();
         }
         _calculateReward();
-        total -= stakers[msg.sender].stakeAmount; 
+        totalStake -= stakers[msg.sender].stakeAmount; 
         uint256 toTransfer = (totalReward - stakers[msg.sender].rewardSnapShot+1)*stakers[msg.sender].stakeAmount - withdrawFee;
         delete stakers[msg.sender];
         rewardToken.safeTransfer(msg.sender,toTransfer);
         if (withdrawFee>0) {
             rewardToken.safeTransfer(rewardToken.owner(),withdrawFee);    
         }
+        emit Withdraw(msg.sender, toTransfer);
     }
 
     /** @dev calculates the rewards.
     */
     function _calculateReward() private {
-        if (lastPaidBlock!=0 && total>0){
-            totalReward += ((block.number - lastPaidBlock)*rewardToken.rewardRate())/total;
+        if (lastPaidBlock!=0 && totalStake>0){
+            totalReward += ((block.number - lastPaidBlock)*rewardToken.rewardRate())*TOTAL_REWARD_PRECISION/totalStake;
         }
         lastPaidBlock = block.number;
     }
