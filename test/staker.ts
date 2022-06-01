@@ -71,6 +71,12 @@ describe("RewardToken", () => {
       await staker.connect(acc1).deposit(parseEther("100"));
       expect(await staker.totalStake()).to.equal(parseEther("100"));
     });
+    it("Should remove deposited amount from acc1 RewardToken balance ", async () => {
+      const balancePrev = await rewardToken.balanceOf(acc1.address);
+      await staker.connect(acc1).deposit(parseEther("100"));
+      const balanceAfter = await rewardToken.balanceOf(acc1.address);
+      expect(balancePrev).to.equal(balanceAfter.add(parseEther("100")));
+    });
     it("Should emit Deposit event", async () => {
       await expect(staker.connect(acc1).deposit(parseEther("100")))
         .to.emit(staker, "Deposit")
