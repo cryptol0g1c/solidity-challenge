@@ -233,7 +233,7 @@ describe("RewardToken", () => {
       const totalReward = await staker.totalReward();
       const expectedTransfer = totalReward
         .sub(stakerAcc2.rewardSnapShot)
-        .add(1)
+        .add(TOTAL_REWARD_PRECISION)
         .mul(stakerAcc2.stakeAmount)
         .div(TOTAL_REWARD_PRECISION);
       expect(expectedTransfer).to.be.equal(balanceAfter.sub(balanceBefore));
@@ -254,20 +254,26 @@ describe("RewardToken", () => {
       const totalReward = await staker.totalReward();
       const expectedTransfer = totalReward
         .sub(stakerAcc2.rewardSnapShot)
-        .add(1)
+        .add(TOTAL_REWARD_PRECISION)
         .mul(stakerAcc2.stakeAmount)
         .div(TOTAL_REWARD_PRECISION);
       expect(expectedTransfer.sub(withdrawFee)).to.be.equal(
         balanceAfter.sub(balanceBefore)
       );
     });
-    it("Should update the total stake", async () => {
+    it("Should transfer he withdraw fee to the owner", async () => {
       await rewardToken.enableWithdrawFee(true);
       await staker.connect(acc1).deposit(parseEther("100"));
       const balanceBefore = await rewardToken.balanceOf(owner.address);
       await staker.connect(acc1).withdraw();
       const balanceAfter = await rewardToken.balanceOf(owner.address);
       expect(withdrawFee).to.be.equal(balanceAfter.sub(balanceBefore));
+    });
+    it("Should emit Withdraw event with address and amount", async () => {
+      await staker.connect(acc1).deposit(parseEther("100"));
+      await expect(staker.connect(acc1).withdraw())
+        .to.emit(staker, "Withdraw")
+        .withArgs(acc1.address, parseEther("110"));
     });
   });
 });
