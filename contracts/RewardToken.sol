@@ -5,13 +5,19 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title ERC20 token used for staking/rewards in Staker contract
-/// @dev The owner is able to mint the token, change reward rates and enable/disable withdraw fees (also modifiable)
+/** @dev The owner is able to mint the token, change reward rates and 
+    enable/disable withdraw fees (also modifiable) */
 contract RewardToken is ERC20, Ownable {
     // These variables are used by the Staker contract.
     // Just here for the challenge requirements, but normally they would be
     // in the Staker contract
     uint public withdrawFee;
     uint public rewardRate;
+    // We could use withdrawFee = 0 as a way to disabled the fees
+    // saving gas storage in RewardToken and gas costs in Staker
+    // without checking if isWithdrawFeeEnabled is true or false
+    // But as I understood, this approach to enabled/disabled fees
+    // is a requirement.
     bool public isWithdrawFeeEnabled;
 
     constructor() ERC20("RewardToken", "RTK") {}
