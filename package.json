@@ -18,7 +18,8 @@
   "homepage": "https://github.com/leanonchain/solidity-challenge#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^4.6.0",
-    "hardhat": "^2.9.7"
+    "hardhat": "^2.9.7",
+    "hardhat-gas-reporter": "^1.0.8"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",

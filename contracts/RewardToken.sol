@@ -13,12 +13,15 @@ contract RewardToken is ERC20, Ownable {
     // in the Staker contract
     uint public withdrawFee;
     uint public rewardRate;
+    // maxWithdrawalFee for user security reasons. If we don't have
+    // we should ensure that withdrawFee can't be greater than 10000 = 100%
+    uint16 public constant maxWithdrawalFee = 1000; // 10%
     // We could use withdrawFee = 0 as a way to disabled the fees
     // saving gas storage in RewardToken and gas costs in Staker
-    // without checking if isWithdrawFeeEnabled is true or false
+    // without checking if isWithdrawalFeeEnabled is true or false
     // But as I understood, this approach to enabled/disabled fees
     // is a requirement.
-    bool public isWithdrawFeeEnabled;
+    bool public isWithdrawalFeeEnabled;
 
     constructor() ERC20("RewardToken", "RTK") {}
 
@@ -30,10 +33,20 @@ contract RewardToken is ERC20, Ownable {
         external
         onlyOwner
     {
-        isWithdrawFeeEnabled = _isWithdrawFeeEnabled;
+        // Avoid calls with no changes
+        require(_isWithdrawFeeEnabled != isWithdrawalFeeEnabled, "");
+        isWithdrawalFeeEnabled = _isWithdrawFeeEnabled;
     }
 
     function setWithdrawFee(uint _withdrawFee) external onlyOwner {
+        require(
+            _withdrawFee > 0,
+            "withdrawFee can't be 0. Maybe you want to call setIsWidrawFeeEnabled with false"
+        );
+        require(
+            _withdrawFee <= maxWithdrawalFee,
+            "withdrawFee can't be greater than 1000"
+        );
         withdrawFee = _withdrawFee;
     }
 
