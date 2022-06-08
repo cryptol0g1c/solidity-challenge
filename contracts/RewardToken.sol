@@ -11,8 +11,9 @@ contract RewardToken is ERC20, Ownable {
     // These variables are used by the Staker contract.
     // Just here for the challenge requirements, but normally they would be
     // in the Staker contract
-    uint public withdrawFee;
+
     uint public rewardRate;
+    uint16 public withdrawFee;
     // maxWithdrawalFee for user security reasons. If we don't have
     // we should ensure that withdrawFee can't be greater than 10000 = 100%
     uint16 public constant maxWithdrawalFee = 1000; // 10%
@@ -38,7 +39,7 @@ contract RewardToken is ERC20, Ownable {
         isWithdrawalFeeEnabled = _isWithdrawFeeEnabled;
     }
 
-    function setWithdrawFee(uint _withdrawFee) external onlyOwner {
+    function setWithdrawFee(uint16 _withdrawFee) external onlyOwner {
         require(
             _withdrawFee > 0,
             "withdrawFee can't be 0. Maybe you want to call setIsWidrawFeeEnabled with false"
