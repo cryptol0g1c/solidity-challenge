@@ -13,11 +13,11 @@ contract RewardToken is ERC20, Ownable {
     // in the Staker contract
 
     uint public rewardRate;
-    uint16 public withdrawFee;
+    uint16 public withdrawalFee;
     // maxWithdrawalFee for user security reasons. If we don't have
-    // we should ensure that withdrawFee can't be greater than 10000 = 100%
+    // we should ensure that withdrawalFee can't be greater than 10000 = 100%
     uint16 public constant maxWithdrawalFee = 1000; // 10%
-    // We could use withdrawFee = 0 as a way to disabled the fees
+    // We could use withdrawalFee = 0 as a way to disabled the fees
     // saving gas storage in RewardToken and gas costs in Staker
     // without checking if isWithdrawalFeeEnabled is true or false
     // But as I understood, this approach to enabled/disabled fees
@@ -30,25 +30,28 @@ contract RewardToken is ERC20, Ownable {
         _mint(_to, _amount);
     }
 
-    function setIsWidrawFeeEnabled(bool _isWithdrawFeeEnabled)
+    function setIsWidrawalFeeEnabled(bool _isWithdrawalFeeEnabled)
         external
         onlyOwner
     {
         // Avoid calls with no changes
-        require(_isWithdrawFeeEnabled != isWithdrawalFeeEnabled, "");
-        isWithdrawalFeeEnabled = _isWithdrawFeeEnabled;
+        require(
+            _isWithdrawalFeeEnabled != isWithdrawalFeeEnabled,
+            "isWithdrawalFeeEnabled already has the valor sent"
+        );
+        isWithdrawalFeeEnabled = _isWithdrawalFeeEnabled;
     }
 
-    function setWithdrawFee(uint16 _withdrawFee) external onlyOwner {
+    function setWithdrawalFee(uint16 _withdrawalFee) external onlyOwner {
         require(
-            _withdrawFee > 0,
-            "withdrawFee can't be 0. Maybe you want to call setIsWidrawFeeEnabled with false"
+            _withdrawalFee > 0,
+            "withdrawalFee can't be 0. Maybe you want to call setIsWidrawalFeeEnabled with false"
         );
         require(
-            _withdrawFee <= maxWithdrawalFee,
-            "withdrawFee can't be greater than 1000"
+            _withdrawalFee <= maxWithdrawalFee,
+            "withdrawalFee can't be greater than 1000"
         );
-        withdrawFee = _withdrawFee;
+        withdrawalFee = _withdrawalFee;
     }
 
     function setRewardRate(uint _rewardRate) external onlyOwner {
