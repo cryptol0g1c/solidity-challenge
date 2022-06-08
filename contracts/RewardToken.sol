@@ -14,7 +14,7 @@ contract RewardToken is ERC20, Ownable {
 
     uint public rewardRate;
     uint16 public withdrawalFee;
-    // maxWithdrawalFee for user security reasons. If we don't have
+    // maxWithdrawalFee for user security reasons. If we don't have one
     // we should ensure that withdrawalFee can't be greater than 10000 = 100%
     uint16 public constant maxWithdrawalFee = 1000; // 10%
     // We could use withdrawalFee = 0 as a way to disabled the fees
@@ -23,6 +23,10 @@ contract RewardToken is ERC20, Ownable {
     // But as I understood, this approach to enabled/disabled fees
     // is a requirement.
     bool public isWithdrawalFeeEnabled;
+
+    event RewardRateUpdated(uint256);
+    event WithdrawalFeeToggled(bool);
+    event WithdrawalFeeUpdated(uint16);
 
     constructor() ERC20("RewardToken", "RTK") {}
 
@@ -40,6 +44,7 @@ contract RewardToken is ERC20, Ownable {
             "isWithdrawalFeeEnabled already has the valor sent"
         );
         isWithdrawalFeeEnabled = _isWithdrawalFeeEnabled;
+        emit WithdrawalFeeToggled(_isWithdrawalFeeEnabled);
     }
 
     function setWithdrawalFee(uint16 _withdrawalFee) external onlyOwner {
@@ -52,9 +57,11 @@ contract RewardToken is ERC20, Ownable {
             "withdrawalFee can't be greater than 1000"
         );
         withdrawalFee = _withdrawalFee;
+        emit WithdrawalFeeUpdated(_withdrawalFee);
     }
 
     function setRewardRate(uint _rewardRate) external onlyOwner {
         rewardRate = _rewardRate;
+        emit RewardRateUpdated(_rewardRate);
     }
 }
