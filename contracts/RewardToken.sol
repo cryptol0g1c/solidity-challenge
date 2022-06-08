@@ -28,7 +28,22 @@ contract RewardToken is ERC20, Ownable {
     event WithdrawalFeeToggled(bool);
     event WithdrawalFeeUpdated(uint16);
 
-    constructor() ERC20("RewardToken", "RTK") {}
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        bool _isWithdrawalFeeEnabled,
+        uint16 _withdrawalFee,
+        uint _rewardRate
+    ) ERC20(_name, _symbol) {
+        require(_withdrawalFee > 0, "withdrawalFee can't be 0");
+        require(
+            _withdrawalFee <= maxWithdrawalFee,
+            "withdrawalFee can't be greater than 1000"
+        );
+        withdrawalFee = _withdrawalFee;
+        isWithdrawalFeeEnabled = _isWithdrawalFeeEnabled;
+        rewardRate = _rewardRate;
+    }
 
     function mint(address _to, uint _amount) external onlyOwner {
         _mint(_to, _amount);
