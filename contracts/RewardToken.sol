@@ -49,7 +49,7 @@ contract RewardToken is ERC20, Ownable {
         _mint(_to, _amount);
     }
 
-    function setIsWidrawalFeeEnabled(bool _isWithdrawalFeeEnabled)
+    function setIsWithdrawalFeeEnabled(bool _isWithdrawalFeeEnabled)
         external
         onlyOwner
     {
@@ -65,7 +65,7 @@ contract RewardToken is ERC20, Ownable {
     function setWithdrawalFee(uint16 _withdrawalFee) external onlyOwner {
         require(
             _withdrawalFee > 0,
-            "withdrawalFee can't be 0. Maybe you want to call setIsWidrawalFeeEnabled with false"
+            "withdrawalFee can't be 0. Maybe you want to call setIsWithdrawalFeeEnabled with false"
         );
         require(
             _withdrawalFee <= maxWithdrawalFee,
