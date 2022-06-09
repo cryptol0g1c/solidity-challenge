@@ -25,6 +25,7 @@ contract Staker is Ownable, ReentrancyGuard {
     uint256 private constant STAKER_SHARE_PRECISION = 1e18;
     uint256 public lastRewardBlock;
     uint256 public accRewardTokenPerShare;
+    uint256 public totalStaked;
     // Info of each user that stakes tokens
     mapping(address => UserInfo) public userInfo;
 
@@ -39,6 +40,7 @@ contract Staker is Ownable, ReentrancyGuard {
     function deposit(uint256 _amount) external nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
         updateStaking();
+        totalStaked += _amount;
         user.amount += _amount;
         user.rewardDebt +=
             (user.amount * accRewardTokenPerShare) /
@@ -59,6 +61,7 @@ contract Staker is Ownable, ReentrancyGuard {
             STAKER_SHARE_PRECISION -
             user.rewardDebt;
         uint256 userTotalTokens = user.amount + pending;
+        totalStaked -= user.amount;
         user.amount = 0;
         user.rewardDebt = 0;
         if (rewardToken.isWithdrawalFeeEnabled()) {
@@ -75,13 +78,12 @@ contract Staker is Ownable, ReentrancyGuard {
         if (block.number <= lastRewardBlock) {
             return;
         }
-        uint256 totalSupply = rewardToken.balanceOf(address(this));
-        if (totalSupply != 0) {
+        if (totalStaked != 0) {
             uint256 multiplier = block.number - lastRewardBlock;
             uint256 tokenReward = multiplier * rewardToken.rewardRate();
             accRewardTokenPerShare +=
                 (tokenReward * STAKER_SHARE_PRECISION) /
-                totalSupply;
+                totalStaked;
         }
         lastRewardBlock = block.number;
     }
