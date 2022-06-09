@@ -16,8 +16,8 @@ contract Staker is Ownable, ReentrancyGuard {
     using SafeERC20 for RewardToken;
 
     struct UserInfo {
-        uint256 amount; // How many tokens the user has provided.
-        uint256 rewardDebt; // Reward debt. See explanation below.
+        uint256 amount; // How many tokens the user has provided
+        uint256 rewardDebt; // The amount of rewardToken entitled to the user
     }
 
     RewardToken public immutable rewardToken;
@@ -42,9 +42,7 @@ contract Staker is Ownable, ReentrancyGuard {
         updateStaking();
         totalStaked += _amount;
         user.amount += _amount;
-        user.rewardDebt +=
-            (user.amount * accRewardTokenPerShare) /
-            STAKER_SHARE_PRECISION;
+        user.rewardDebt += _getUserDebt();
         rewardToken.safeTransferFrom(
             address(msg.sender),
             address(this),
@@ -57,9 +55,7 @@ contract Staker is Ownable, ReentrancyGuard {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount > 0, "Nothing to withdraw");
         updateStaking();
-        uint256 pending = (user.amount * accRewardTokenPerShare) /
-            STAKER_SHARE_PRECISION -
-            user.rewardDebt;
+        uint256 pending = _getUserDebt() - user.rewardDebt;
         uint256 userTotalTokens = user.amount + pending;
         totalStaked -= user.amount;
         user.amount = 0;
@@ -86,5 +82,10 @@ contract Staker is Ownable, ReentrancyGuard {
                 totalStaked;
         }
         lastRewardBlock = block.number;
+    }
+
+    function _getUserDebt() private view returns (uint) {
+        return ((userInfo[msg.sender].amount * accRewardTokenPerShare) /
+            STAKER_SHARE_PRECISION);
     }
 }
