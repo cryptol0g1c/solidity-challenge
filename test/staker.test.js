@@ -1,10 +1,16 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const parseEther = ethers.utils.parseEther;
+const hexValue = ethers.utils.hexValue;
 const BN = ethers.BigNumber;
 const provider = ethers.provider;
 
+async function getBlockNumber() {
+  return (await provider.getBlock("latest")).number;
+}
+
 describe("Staker", () => {
+  const STAKER_SHARE_PRECISION = parseEther("1");
   let owner;
   let users = new Array(2);
   let rewardTokenProps = {
@@ -45,8 +51,7 @@ describe("Staker", () => {
     rewardTokenProps.owner = owner.address;
 
     const Staker = await ethers.getContractFactory("Staker");
-    const latestBlock = await provider.getBlock("latest");
-    startBlock += latestBlock.number;
+    startBlock += await getBlockNumber();
     staker = await Staker.deploy(rewardToken.address, startBlock);
   });
 
@@ -117,6 +122,31 @@ describe("Staker", () => {
         rewardTokenProps.totalSupply
       );
       expect(await staker.totalStaked()).to.be.eq(totalTokenToUsers);
+    });
+
+    it("Rewards shouldn't be started", async () => {
+      expect(await staker.lastRewardBlock()).to.be.gt(await getBlockNumber());
+    });
+
+    it("Start rewards distributions", async () => {
+      const remainingBlocks = startBlock - (await getBlockNumber());
+      await provider.send("hardhat_mine", [hexValue(remainingBlocks + 1)]);
+      expect(await staker.lastRewardBlock()).to.be.lt(await getBlockNumber());
+      expect(await staker.accRewardTokenPerShare()).to.be.eq(0);
+    });
+
+    it("UpdateStaking", async () => {
+      const blockBefore = await staker.lastRewardBlock();
+      await staker.updateStaking();
+      const blockAfter = await getBlockNumber();
+      expect(await staker.lastRewardBlock()).to.be.eq(blockAfter);
+      expect(await staker.accRewardTokenPerShare()).to.be.eq(
+        BN.from(blockAfter)
+          .sub(blockBefore)
+          .mul(await rewardToken.rewardRate())
+          .mul(STAKER_SHARE_PRECISION)
+          .div(await staker.totalStaked())
+      );
     });
   });
 });
