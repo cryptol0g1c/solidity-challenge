@@ -37,6 +37,7 @@ contract Staker is ReentrancyGuard {
     }
 
     function deposit(uint256 _amount) external nonReentrant {
+        require(_amount > 0, "Can't deposit 0 tokens");
         UserInfo storage user = userInfo[msg.sender];
         updateStaking();
         totalStaked += _amount;

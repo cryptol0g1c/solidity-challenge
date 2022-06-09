@@ -26,6 +26,9 @@ describe("Staker", () => {
   let startBlock = 1000;
   const tokensToStaker = parseEther("1000");
   const tokensPerUser = [50, 30].map((amount) => parseEther(amount.toString()));
+  const totalTokenToUsers = tokensPerUser.reduce((a, b) => {
+    return a.add(b);
+  });
 
   before(async () => {
     const RewardToken = await ethers.getContractFactory("RewardToken");
@@ -57,14 +60,14 @@ describe("Staker", () => {
   describe("Distribute tokens", () => {
     it("Mint tokens to users", async () => {
       for (let i = 0; i < users.length; i++) {
-        await rewardToken.mint(users[i].address, tokensPerUser[i]);
-        expect(await rewardToken.balanceOf(users[i].address)).to.be.eq(
-          tokensPerUser[i]
+        let tokensToUser = tokensPerUser[i];
+        let user = users[i];
+        await rewardToken.mint(user.address, tokensToUser);
+        expect(await rewardToken.balanceOf(user.address)).to.be.eq(
+          tokensToUser
         );
       }
-      rewardTokenProps.totalSupply = tokensPerUser.reduce((a, b) => {
-        return a.add(b);
-      });
+      rewardTokenProps.totalSupply = totalTokenToUsers;
       expect(await rewardToken.totalSupply()).to.be.eq(
         rewardTokenProps.totalSupply
       );
@@ -77,6 +80,43 @@ describe("Staker", () => {
       expect(await rewardToken.totalSupply()).to.be.eq(
         rewardTokenProps.totalSupply
       );
+    });
+
+    it("Approve staker transfer users tokens", async () => {
+      for (let i = 0; i < users.length; i++) {
+        let tokensToUser = tokensPerUser[i];
+        let user = users[i];
+        await rewardToken.connect(user).approve(staker.address, tokensToUser);
+        expect(
+          await rewardToken.allowance(user.address, staker.address)
+        ).to.be.eq(tokensToUser);
+      }
+    });
+  });
+
+  describe("Staker functions", () => {
+    it("Reject deposit 0", async () => {
+      await expect(staker.deposit(0)).to.be.revertedWith(
+        "Can't deposit 0 tokens"
+      );
+    });
+
+    it("Users deposit tokens and emit event", async () => {
+      for (let i = 0; i < users.length; i++) {
+        let tokensToUser = tokensPerUser[i];
+        let user = users[i];
+        await expect(staker.connect(user).deposit(tokensToUser))
+          .to.emit(staker, "Deposit")
+          .withArgs(user.address, tokensToUser);
+        expect(await rewardToken.balanceOf(user.address)).to.be.eq(0);
+        let userInfo = await staker.userInfo(user.address);
+        expect(userInfo.amount).to.be.eq(tokensToUser);
+        expect(userInfo.rewardDebt).to.be.eq(0);
+      }
+      expect(await rewardToken.balanceOf(staker.address)).to.be.eq(
+        rewardTokenProps.totalSupply
+      );
+      expect(await staker.totalStaked()).to.be.eq(totalTokenToUsers);
     });
   });
 });
