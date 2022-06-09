@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/leanonchain/solidity-challenge#readme",
   "dependencies": {
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
     "@openzeppelin/contracts": "^4.6.0",
+    "dotenv": "^16.0.1",
     "hardhat": "^2.9.7",
     "hardhat-gas-reporter": "^1.0.8"
   },
