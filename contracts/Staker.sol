@@ -42,7 +42,7 @@ contract Staker is ReentrancyGuard {
         updateStaking();
         totalStaked += _amount;
         user.amount += _amount;
-        user.rewardDebt += _getUserDebt(msg.sender);
+        user.rewardDebt += getUserDebt(msg.sender);
         rewardToken.safeTransferFrom(
             address(msg.sender),
             address(this),
@@ -85,10 +85,10 @@ contract Staker is ReentrancyGuard {
     }
 
     function getPending(address user) public view returns (uint) {
-        return _getUserDebt(user) - userInfo[user].rewardDebt;
+        return getUserDebt(user) - userInfo[user].rewardDebt;
     }
 
-    function _getUserDebt(address user) private view returns (uint) {
+    function getUserDebt(address user) public view returns (uint) {
         return ((userInfo[user].amount * accRewardTokenPerShare) /
             STAKER_SHARE_PRECISION);
     }

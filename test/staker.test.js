@@ -10,15 +10,16 @@ async function getBlockNumber() {
 }
 
 describe("Staker", () => {
+  const BASIS_POINTS = BN.from(10000);
   const STAKER_SHARE_PRECISION = parseEther("1");
   let owner;
-  let users = new Array(2);
+  let users = new Array(4);
   let rewardTokenProps = {
     address: undefined,
     name: "RewardToken",
     symbol: "RTK",
     withdrawalFee: 400, // 4%
-    isWithdrawalFeeEnabled: false,
+    isWithdrawalFeeEnabled: true,
     rewardRate: parseEther("0.001"),
     owner: undefined,
     totalSupply: BN.from(0),
@@ -28,17 +29,39 @@ describe("Staker", () => {
   const newWithdrawalFee = 800;
   const newRewardRate = parseEther("0.01");
   const newIsWithdrawalFeeEnabled = true;
-  const ownerError = "Ownable: caller is not the owner";
   let startBlock = 1000;
   const tokensToStaker = parseEther("1000");
-  const tokensPerUser = [50, 30].map((amount) => parseEther(amount.toString()));
+  const tokensPerUser = [50, 30, 120, 200].map((amount) =>
+    parseEther(amount.toString())
+  );
   const totalTokenToUsers = tokensPerUser.reduce((a, b) => {
     return a.add(b);
   });
 
+  async function getPending(user) {
+    await staker.updateStaking();
+    const accRewardTokenPerShare = await staker.accRewardTokenPerShare();
+    const rewardRate = await rewardToken.rewardRate();
+    const totalStaked = await staker.totalStaked();
+    const userInfo = await staker.userInfo(user);
+    const pending = userInfo.amount
+      .mul(
+        accRewardTokenPerShare.add(
+          BN.from(1)
+            .mul(rewardRate)
+            .mul(STAKER_SHARE_PRECISION)
+            .div(totalStaked)
+        )
+      )
+      .div(STAKER_SHARE_PRECISION)
+      .sub(userInfo.rewardDebt);
+
+    return pending;
+  }
+
   before(async () => {
     const RewardToken = await ethers.getContractFactory("RewardToken");
-    [owner, users[0], users[1]] = await ethers.getSigners();
+    [owner, users[0], users[1], users[2], users[3]] = await ethers.getSigners();
     rewardToken = await RewardToken.deploy(
       rewardTokenProps.name,
       rewardTokenProps.symbol,
@@ -146,6 +169,63 @@ describe("Staker", () => {
           .mul(await rewardToken.rewardRate())
           .mul(STAKER_SHARE_PRECISION)
           .div(await staker.totalStaked())
+      );
+    });
+
+    it("Check pending rewards", async () => {
+      for (let i = 0; i < users.length; i++) {
+        let user = users[i];
+        const pending = await staker.getPending(user.address);
+        const debt = await staker.getUserDebt(user.address);
+        expect(pending).to.be.eq(
+          debt.sub((await staker.userInfo(user.address)).rewardDebt)
+        );
+      }
+    });
+
+    it("User0 withdraw with fee", async () => {
+      const user = users[0];
+      const userTokensStaked = tokensPerUser[0];
+      const pending = await getPending(user.address);
+      const stakerBalanceBefore = await rewardToken.balanceOf(staker.address);
+      await staker.connect(user).withdraw();
+      const stakerBalanceAfter = await rewardToken.balanceOf(staker.address);
+      const userInfo = await staker.userInfo(user.address);
+      expect(userInfo.amount).to.be.eq(0);
+      expect(userInfo.rewardDebt).to.be.eq(0);
+      const devFee = userTokensStaked
+        .add(pending)
+        .mul(await rewardToken.withdrawalFee())
+        .div(BASIS_POINTS);
+      expect(await rewardToken.balanceOf(user.address)).to.be.eq(
+        userTokensStaked.add(pending).sub(devFee)
+      );
+      expect(stakerBalanceAfter).to.be.eq(
+        stakerBalanceBefore.sub(userTokensStaked.add(pending))
+      );
+      expect(await rewardToken.balanceOf(owner.address)).to.be.eq(devFee);
+    });
+
+    it("User1 withdraw without fee", async () => {
+      await rewardToken.setIsWithdrawalFeeEnabled(false);
+      const user = users[1];
+      const userTokensStaked = tokensPerUser[1];
+      const pending = await getPending(user.address);
+      const ownerBalanceBefore = await rewardToken.balanceOf(owner.address);
+      const stakerBalanceBefore = await rewardToken.balanceOf(staker.address);
+      await staker.connect(user).withdraw();
+      const stakerBalanceAfter = await rewardToken.balanceOf(staker.address);
+      const userInfo = await staker.userInfo(user.address);
+      expect(userInfo.amount).to.be.eq(0);
+      expect(userInfo.rewardDebt).to.be.eq(0);
+      expect(await rewardToken.balanceOf(user.address)).to.be.eq(
+        userTokensStaked.add(pending)
+      );
+      expect(stakerBalanceAfter).to.be.eq(
+        stakerBalanceBefore.sub(userTokensStaked.add(pending))
+      );
+      expect(await rewardToken.balanceOf(owner.address)).to.be.eq(
+        ownerBalanceBefore
       );
     });
   });
