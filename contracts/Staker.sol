@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./RewardToken.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -12,7 +11,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// Reward manage system based on:
 /// https://github.com/sushiswap/sushiswap/blob/archieve/canary/contracts/MasterChefV2.sol
-contract Staker is Ownable, ReentrancyGuard {
+contract Staker is ReentrancyGuard {
     using SafeERC20 for RewardToken;
 
     struct UserInfo {
