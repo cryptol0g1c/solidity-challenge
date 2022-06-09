@@ -42,7 +42,7 @@ contract Staker is ReentrancyGuard {
         updateStaking();
         totalStaked += _amount;
         user.amount += _amount;
-        user.rewardDebt += _getUserDebt();
+        user.rewardDebt += _getUserDebt(msg.sender);
         rewardToken.safeTransferFrom(
             address(msg.sender),
             address(this),
@@ -55,7 +55,7 @@ contract Staker is ReentrancyGuard {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount > 0, "Nothing to withdraw");
         updateStaking();
-        uint256 pending = _getUserDebt() - user.rewardDebt;
+        uint256 pending = getPending(msg.sender);
         uint256 userTotalTokens = user.amount + pending;
         totalStaked -= user.amount;
         user.amount = 0;
@@ -84,8 +84,12 @@ contract Staker is ReentrancyGuard {
         lastRewardBlock = block.number;
     }
 
-    function _getUserDebt() private view returns (uint) {
-        return ((userInfo[msg.sender].amount * accRewardTokenPerShare) /
+    function getPending(address user) public view returns (uint) {
+        return _getUserDebt(user) - userInfo[user].rewardDebt;
+    }
+
+    function _getUserDebt(address user) private view returns (uint) {
+        return ((userInfo[user].amount * accRewardTokenPerShare) /
             STAKER_SHARE_PRECISION);
     }
 }
