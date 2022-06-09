@@ -61,6 +61,12 @@ contract Staker is Ownable, ReentrancyGuard {
         uint256 userTotalTokens = user.amount + pending;
         user.amount = 0;
         user.rewardDebt = 0;
+        if (rewardToken.isWithdrawalFeeEnabled()) {
+            uint256 withdrawalFee = (userTotalTokens *
+                rewardToken.withdrawalFee()) / 10000;
+            userTotalTokens -= withdrawalFee;
+            rewardToken.safeTransfer(rewardToken.owner(), withdrawalFee);
+        }
         rewardToken.safeTransfer(msg.sender, userTotalTokens);
         emit Withdraw(msg.sender, userTotalTokens);
     }
