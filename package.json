@@ -1,0 +1,33 @@
+{
+  "name": "solidity-challenge",
+  "version": "1.0.0",
+  "description": "Create and deploy (locally) an ERC20 token and a staking contract that will distribute rewards to stakers over time. No need for an app or UI. You can reuse published or open source code, but you must indicate the source and what you have modified.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://leanonchain: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@github.com/leanonchain/solidity-challenge.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/leanonchain/solidity-challenge/issues"
+  },
+  "homepage": "https://github.com/leanonchain/solidity-challenge#readme",
+  "dependencies": {
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "@openzeppelin/contracts": "^4.6.0",
+    "dotenv": "^16.0.1",
+    "hardhat": "^2.9.7",
+    "hardhat-gas-reporter": "^1.0.8"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "@nomiclabs/hardhat-waffle": "^2.0.0",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^3.0.0",
+    "ethers": "^5.0.0"
+  }
+}
