@@ -32,6 +32,10 @@ contract Staker is ReentrancyGuard {
     event Withdraw(address indexed user, uint256 amount);
 
     constructor(address _rewardToken, uint256 _startBlock) {
+        require(
+            _startBlock > block.number,
+            "startBlock can't be lower than current block."
+        );
         rewardToken = RewardToken(_rewardToken);
         lastRewardBlock = _startBlock;
     }
