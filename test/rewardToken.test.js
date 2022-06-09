@@ -182,4 +182,24 @@ describe("RewardToken", () => {
       });
     });
   });
+
+  describe("User functions", () => {
+    it("Reject transfer if amount exceeds balance", async () => {
+      await expect(
+        rewardToken
+          .connect(acc1)
+          .transfer(owner.address, rewardTokenProps.totalSupply.add(1))
+      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    });
+
+    it("Transfer from acc1 to owner", async () => {
+      await rewardToken
+        .connect(acc1)
+        .transfer(owner.address, rewardTokenProps.totalSupply);
+      expect(await rewardToken.balanceOf(acc1.address)).to.eq(0);
+      expect(await rewardToken.balanceOf(owner.address)).to.eq(
+        rewardTokenProps.totalSupply
+      );
+    });
+  });
 });
