@@ -188,6 +188,7 @@ describe("Staker", () => {
       const userTokensStaked = tokensPerUser[0];
       const pending = await getPending(user.address);
       const stakerBalanceBefore = await rewardToken.balanceOf(staker.address);
+      const ownerBalanceBefore = await rewardToken.balanceOf(owner.address);
       await staker.connect(user).withdraw();
       const stakerBalanceAfter = await rewardToken.balanceOf(staker.address);
       const userInfo = await staker.userInfo(user.address);
@@ -203,7 +204,9 @@ describe("Staker", () => {
       expect(stakerBalanceAfter).to.be.eq(
         stakerBalanceBefore.sub(userTokensStaked.add(pending))
       );
-      expect(await rewardToken.balanceOf(owner.address)).to.be.eq(devFee);
+      expect(await rewardToken.balanceOf(owner.address)).to.be.eq(
+        ownerBalanceBefore.add(devFee)
+      );
     });
 
     it("User1 withdraw without fee", async () => {
@@ -227,6 +230,58 @@ describe("Staker", () => {
       expect(await rewardToken.balanceOf(owner.address)).to.be.eq(
         ownerBalanceBefore
       );
+      await rewardToken.setIsWithdrawalFeeEnabled(true);
+    });
+
+    it("User2 withdraw with new rewardRate and fee", async () => {
+      await rewardToken.setRewardRate(newRewardRate);
+      const user = users[2];
+      const userTokensStaked = tokensPerUser[2];
+      const pending = await getPending(user.address);
+      const stakerBalanceBefore = await rewardToken.balanceOf(staker.address);
+      const ownerBalanceBefore = await rewardToken.balanceOf(owner.address);
+      await staker.connect(user).withdraw();
+      const stakerBalanceAfter = await rewardToken.balanceOf(staker.address);
+      const userInfo = await staker.userInfo(user.address);
+      expect(userInfo.amount).to.be.eq(0);
+      expect(userInfo.rewardDebt).to.be.eq(0);
+      const devFee = userTokensStaked
+        .add(pending)
+        .mul(await rewardToken.withdrawalFee())
+        .div(BASIS_POINTS);
+      expect(await rewardToken.balanceOf(user.address)).to.be.eq(
+        userTokensStaked.add(pending).sub(devFee)
+      );
+      expect(stakerBalanceAfter).to.be.eq(
+        stakerBalanceBefore.sub(userTokensStaked.add(pending))
+      );
+      expect(await rewardToken.balanceOf(owner.address)).to.be.eq(
+        ownerBalanceBefore.add(devFee)
+      );
+    });
+
+    it("User3 withdraw with new rewardRate and no fee", async () => {
+      await rewardToken.setIsWithdrawalFeeEnabled(false);
+      const user = users[3];
+      const userTokensStaked = tokensPerUser[3];
+      const pending = await getPending(user.address);
+      const ownerBalanceBefore = await rewardToken.balanceOf(owner.address);
+      const stakerBalanceBefore = await rewardToken.balanceOf(staker.address);
+      await staker.connect(user).withdraw();
+      const stakerBalanceAfter = await rewardToken.balanceOf(staker.address);
+      const userInfo = await staker.userInfo(user.address);
+      expect(userInfo.amount).to.be.eq(0);
+      expect(userInfo.rewardDebt).to.be.eq(0);
+      expect(await rewardToken.balanceOf(user.address)).to.be.eq(
+        userTokensStaked.add(pending)
+      );
+      expect(stakerBalanceAfter).to.be.eq(
+        stakerBalanceBefore.sub(userTokensStaked.add(pending))
+      );
+      expect(await rewardToken.balanceOf(owner.address)).to.be.eq(
+        ownerBalanceBefore
+      );
+      await rewardToken.setIsWithdrawalFeeEnabled(true);
     });
   });
 });
