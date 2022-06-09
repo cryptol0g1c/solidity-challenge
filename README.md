@@ -21,7 +21,9 @@ Staking contract which receives and rewards with the same tokens.
 - Withdraw send all the staked tokens and reward to the user.
 
 ## Deployed contracts
+
 Contracts deployed to https://testnet.bscscan.com/
+
 - RewardToken deployed to: [0xe3ee3acce613E5fab3a9225619A792b796aA9A37](https://testnet.bscscan.com/address/0x1afa492ba972a12b4e5492c6d7c20df1547831ce#code)
 - Staker deployed to: [0x28bcB704BB6D70562c1D61B48A858C46a1c9a204](https://testnet.bscscan.com/address/0x8ea1c67abe52ecfda43fc4913308b6c0d42f048a#code)
 - Start block: [20156079](https://testnet.bscscan.com/block/countdown/20156079)
@@ -32,6 +34,23 @@ Contracts deployed to https://testnet.bscscan.com/
 - ethers.js
 - [@openzeppelin/contracts](https://docs.openzeppelin.com/contracts/4.x/)
 - [hardhat-gas-reporter](https://www.npmjs.com/package/hardhat-gas-reporter)
+
+## Instructions
+### Compile and test
+
+1. Clone repo: `git clone https://github.com/leanonchain/solidity-challenge.git`
+2. Install dependencies: `yarn`
+3. Compile: `npx hardhat compile`
+4. Test: `npx hardhat test`
+
+### Deploy
+1. Create .env file with: 
+```
+BSC_TESTNET_RPC = ""
+BSC_TESTNET_API_KEY = ""
+PRIVATE_KEY = ""
+```
+2. `npx hardhat run --network bsc_testnet scripts/deploy.js`
 
 ## To-do real case / with more time
 
