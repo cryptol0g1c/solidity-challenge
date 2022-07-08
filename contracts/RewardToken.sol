@@ -10,34 +10,39 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract RewardToken is ERC20, AccessControl, Ownable {
-  uint8 public rewardRate;
-  uint8 public withdrawFee;
-  bool public withdrawEnable;
+  /**
+    By convention, this variables and logic hook to them
+    should not be inside of this contract rather on the staker one
+    but as is a challenge request, I left here
+   */
+  uint32 public rewardRate;
+  uint32 public withdrawFee;
+  bool public withdrawFeeEnable;
 
-  event Mint(uint256 supply, address to);
+  event Mint(address to, uint256 supply);
   event SetRewardRate(uint8 _rewardRate, address by);
   event SetWithdrawFee(uint8 _withdrawFee, address by);
-  event SetWithdrawEnable(bool _withdrawEnable, address by);
+  event SetWithdrawFeeEnable(bool _withdrawFeeEnable, address by);
   
-  constructor(uint8 _rewardRate, uint8 _withdrawFee, bool _withdrawEnable) ERC20("REWARDTOKEN", "RTKN") {
-    require(_rewardRate > 0, "_rewardRate must be greater than 0");
-    require(_withdrawFee < 100, "withdrawFee must be minor than 100");
+  constructor(uint8 _rewardRate, uint8 _withdrawFee, bool _withdrawFeeEnable) ERC20("REWARDTOKEN", "RTKN") {
+    require(_rewardRate < 1000, "_rewardRate must be minor than 1000");
+    require(_withdrawFee < 1000, "withdrawFee must be minor than 1000");
 
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
     rewardRate = _rewardRate;
     withdrawFee = _withdrawFee;
-    withdrawEnable = _withdrawEnable;
+    withdrawFeeEnable = _withdrawFeeEnable;
   }
 
-  function mint(uint256 supply, address to) external onlyOwner {
+  function mint(address to, uint256 supply) external onlyOwner {
     _mint(to, supply);
 
-    emit Mint(supply, to);
+    emit Mint(to, supply);
   }
 
   function setRewardRate(uint8 _rewardRate) external onlyRole(DEFAULT_ADMIN_ROLE) {
-    require(_rewardRate > 0, "_rewardRate must be greater than 0");
+    require(_rewardRate < 1000, "_rewardRate must be minor than 1000");
     require(_rewardRate != rewardRate, "_rewardRate must be different");
 
     rewardRate = _rewardRate;
@@ -54,11 +59,11 @@ contract RewardToken is ERC20, AccessControl, Ownable {
     emit SetWithdrawFee(_withdrawFee, msg.sender);
   }
 
-  function setWithdrawEnable(bool _withdrawEnable) external onlyRole(DEFAULT_ADMIN_ROLE) {
-    require(_withdrawEnable != withdrawEnable, "_withdrawEnable must be different");
+  function setWithdrawFeeEnable(bool _withdrawFeeEnable) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    require(_withdrawFeeEnable != withdrawFeeEnable, "_withdrawFeeEnable must be different");
 
-    withdrawEnable = _withdrawEnable;
+    withdrawFeeEnable = _withdrawFeeEnable;
 
-    emit SetWithdrawEnable(_withdrawEnable, msg.sender);
+    emit SetWithdrawFeeEnable(_withdrawFeeEnable, msg.sender);
   }
 }

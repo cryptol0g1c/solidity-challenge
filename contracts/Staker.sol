@@ -17,7 +17,7 @@ contract StakeContract is ReentrancyGuard, Ownable {
   using SafeERC20 for RewardToken;
 
   event InitStake(uint256 _internalSupply, address by);
-  event Stake(uint256 ammount, address by, uint256 timestamp);
+  event Deposit(uint256 ammount, address by, uint256 timestamp);
   event Withdraw(uint256 ammount, address by, uint256 timestamp);
   event ClaimReward(uint256 ammount, address by, uint256 timestamp);
 
@@ -25,14 +25,11 @@ contract StakeContract is ReentrancyGuard, Ownable {
 
   struct Staker {
     uint256 balance;
-    uint256 reward;
-    bool withdrawn;
-    bool claimed;
   }
 
   mapping (address => Staker) public stakers;
 
-  // uint256 public stakingStartTime;
+  uint256 public stakingEndTime;
   uint256 public lastBlockNumber;
   uint256 public totalSupply;
   uint256 public internalSupply;
@@ -45,16 +42,32 @@ contract StakeContract is ReentrancyGuard, Ownable {
   function initStake(uint256 _internalSupply) external onlyOwner {
     require(lastBlockNumber == 0, "stake already inited");
 
-    // stakingStartTime = block.timestamp;
+    stakingEndTime = block.timestamp;
     lastBlockNumber = block.number;
     internalSupply = _internalSupply;
 
-    rewardToken.mint(_internalSupply, address(this));
+    rewardToken.mint(address(this), _internalSupply);
 
     emit InitStake(_internalSupply, msg.sender);
   }
 
-  function stake(uint256 ammount) external nonReentrant {
+  /**
+    For each block mined, 100 tokens should be minted
+    and added to the internalSupply for later distribution
+   */
+  function updateInternalSupply() public {
+    if (block.number <= lastBlockNumber) {
+      return;
+    }
+
+    uint256 blocks = block.number - lastBlockNumber;
+    internalSupply += 100 * blocks;
+    lastBlockNumber = block.number;
+
+    rewardToken.mint(address(this), 100 * blocks);
+  }
+
+  function deposit(uint256 ammount) external nonReentrant {
     require(ammount > 0, "ammount must be greater than 0");
 
     if (stakers[msg.sender].balance == 0) {
@@ -63,30 +76,12 @@ contract StakeContract is ReentrancyGuard, Ownable {
 
     totalSupply += ammount;
     stakers[msg.sender].balance += ammount;
-    stakers[msg.sender].claimed = false;
-    stakers[msg.sender].withdrawn = false;
+
+    updateInternalSupply();
 
     rewardToken.safeTransferFrom(msg.sender, address(this), ammount);
 
-    emit Stake(ammount, msg.sender, block.timestamp);
-  }
-
-  /**
-    Return the totalReward with rewardRate, view purpose
-   */
-  function getTotalReward(address from) public view returns (uint256) {
-    require(stakers[from].balance > 0, "no balance staked");
-
-    uint256 stakeRate = totalSupply / stakers[from].balance;
-    uint256 totalReward = internalSupply / stakeRate;
-    uint256 stakeReward = (stakers[from].balance * rewardToken.rewardRate()) / 100;
-    totalReward += stakeReward;
-
-    if (rewardToken.withdrawEnable()) {
-      totalReward -= totalReward * rewardToken.withdrawFee() / 100;
-    }
-
-    return totalReward;
+    emit Deposit(ammount, msg.sender, block.timestamp);
   }
 
   /**
@@ -95,51 +90,37 @@ contract StakeContract is ReentrancyGuard, Ownable {
     without the stakeReward as this one must be minted
    */
   function getWithdraw(address from) internal view returns (uint256) {
-    require(stakers[from].balance > 0, "no balance staked");
-
     uint256 stakeRate = totalSupply / stakers[from].balance;
     uint256 total = internalSupply / stakeRate;
-    total += stakers[from].balance;
-
-    return total;
+    return total + stakers[from].balance;
   }
 
   /**
-    Withdraw the staked 
-    balance plus the internalSupply reward 
-    without the stakeReward as this one must be minted
+    Withdraw the staked balance 
+    plus the internalSupply reward 
+    plus the stakeReward, this one must be minted
    */
   function withdraw() external nonReentrant {
-    require(stakers[msg.sender].balance > 0, "no balance staked");
-    require(stakers[msg.sender].withdrawn == false, "withdraw unavailable");
     require(lastBlockNumber != 0, "withdraw unavailable");
+    require(stakingEndTime < block.timestamp, "withdraw unavailable by timestamp");
+    require(stakers[msg.sender].balance > 0, "no balance staked");
+
+    updateInternalSupply();
     
     uint256 totalWithdraw = getWithdraw(msg.sender);
+    uint256 stakeRewards = (stakers[msg.sender].balance * rewardToken.rewardRate()) / 100;
 
-    if (rewardToken.withdrawEnable()) {
+    if (rewardToken.withdrawFeeEnable()) {
       totalWithdraw -= totalWithdraw * rewardToken.withdrawFee() / 100;
+      stakeRewards -= stakeRewards * rewardToken.withdrawFee() / 100;
     }
 
-    totalSupply -= stakers[msg.sender].balance;
-    internalSupply -= totalWithdraw - stakers[msg.sender].balance;
-    stakers[msg.sender].withdrawn = true;
+    stakers[msg.sender].balance = 0;
+    totalStakers -= 1;
 
-    rewardToken.safeTransfer(msg.sender, totalWithdraw);
+    rewardToken.mint(address(this), stakeRewards);
+    rewardToken.safeTransfer(msg.sender, totalWithdraw + stakeRewards);
 
     emit Withdraw(totalWithdraw, msg.sender, block.timestamp);
-  }
-
-  /**
-    mint reward token and send them to the claimer
-   */
-  function claimReward() external nonReentrant {
-    require(stakers[msg.sender].balance > 0, "no balance staked");
-    require(stakers[msg.sender].claimed == false, "claim unavailable");
-
-    stakers[msg.sender].claimed = true;
-
-    rewardToken.mint((stakers[msg.sender].balance * rewardToken.rewardRate()) / 100, msg.sender);
-
-    emit ClaimReward((stakers[msg.sender].balance * rewardToken.rewardRate()) / 100, msg.sender, block.timestamp);
   }
 }
