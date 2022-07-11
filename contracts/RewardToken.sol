@@ -15,8 +15,8 @@ contract RewardToken is ERC20, AccessControl, Ownable {
     should not be inside of this contract rather on the staker one
     but as is a challenge request, I left here
    */
-  uint32 public rewardRate;
-  uint32 public withdrawFee;
+  uint16 public rewardRate;
+  uint16 public withdrawFee;
   bool public withdrawFeeEnable;
 
   event Mint(address to, uint256 supply);
@@ -51,7 +51,7 @@ contract RewardToken is ERC20, AccessControl, Ownable {
   }
 
   function setWithdrawFee(uint8 _withdrawFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
-    require(_withdrawFee < 100, "_withdrawFee must be minor than 100");
+    require(_withdrawFee < 1000, "_withdrawFee must be minor than 1000");
     require(_withdrawFee != withdrawFee, "_withdrawFee must be different");
 
     withdrawFee = _withdrawFee;

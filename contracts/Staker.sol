@@ -29,6 +29,7 @@ contract StakeContract is ReentrancyGuard, Ownable {
 
   mapping (address => Staker) public stakers;
 
+  uint256 private constant precision = 1e18;
   uint256 public stakingEndTimestamp;
   uint256 public lastBlockNumber;
   uint256 public totalSupply;
@@ -62,10 +63,10 @@ contract StakeContract is ReentrancyGuard, Ownable {
     }
 
     uint256 blocks = block.number - lastBlockNumber;
-    internalSupply += 100 * blocks;
+    internalSupply += 100 * precision * blocks;
     lastBlockNumber = block.number;
 
-    rewardToken.mint(address(this), 100 * blocks);
+    rewardToken.mint(address(this), 100 * precision * blocks);
   }
 
   function deposit(uint256 ammount) external nonReentrant {
@@ -110,11 +111,11 @@ contract StakeContract is ReentrancyGuard, Ownable {
     
     uint256 internalSupplyReward = getInternalSupplyReward(msg.sender);
     uint256 totalWithdraw = internalSupplyReward + stakers[msg.sender].balance;
-    uint256 stakeRewards = (stakers[msg.sender].balance * rewardToken.rewardRate()) / 100;
+    uint256 stakeRewards = (stakers[msg.sender].balance * rewardToken.rewardRate()) / 1000;
 
     if (rewardToken.withdrawFeeEnable()) {
-      totalWithdraw -= totalWithdraw * rewardToken.withdrawFee() / 100;
-      stakeRewards -= stakeRewards * rewardToken.withdrawFee() / 100;
+      totalWithdraw -= totalWithdraw * rewardToken.withdrawFee() / 1000;
+      stakeRewards -= stakeRewards * rewardToken.withdrawFee() / 1000;
     }
 
     internalSupply -= internalSupplyReward;
