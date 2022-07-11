@@ -29,7 +29,7 @@ contract StakeContract is ReentrancyGuard, Ownable {
 
   mapping (address => Staker) public stakers;
 
-  uint256 public stakingEndTime;
+  uint256 public stakingEndTimestamp;
   uint256 public lastBlockNumber;
   uint256 public totalSupply;
   uint256 public internalSupply;
@@ -39,10 +39,11 @@ contract StakeContract is ReentrancyGuard, Ownable {
     rewardToken = RewardToken(_rewardToken);
   }
 
-  function initStake(uint256 _internalSupply) external onlyOwner {
+  function initStake(uint256 _internalSupply, uint256 _stakingEndTimestamp) external onlyOwner {
     require(lastBlockNumber == 0, "stake already inited");
+    require(_stakingEndTimestamp > block.timestamp, "invalid _stakingEndTimestamp");
 
-    stakingEndTime = block.timestamp;
+    stakingEndTimestamp = _stakingEndTimestamp;
     lastBlockNumber = block.number;
     internalSupply = _internalSupply;
 
@@ -68,6 +69,7 @@ contract StakeContract is ReentrancyGuard, Ownable {
   }
 
   function deposit(uint256 ammount) external nonReentrant {
+    require(lastBlockNumber != 0, "deposit unavailable, stake not inited yet");
     require(ammount > 0, "ammount must be greater than 0");
 
     if (stakers[msg.sender].balance == 0) {
@@ -89,10 +91,9 @@ contract StakeContract is ReentrancyGuard, Ownable {
     balance plus the internalSupply reward 
     without the stakeReward as this one must be minted
    */
-  function getWithdraw(address from) internal view returns (uint256) {
+  function getInternalSupplyReward(address from) internal view returns (uint256) {
     uint256 stakeRate = totalSupply / stakers[from].balance;
-    uint256 total = internalSupply / stakeRate;
-    return total + stakers[from].balance;
+    return internalSupply / stakeRate;
   }
 
   /**
@@ -101,13 +102,14 @@ contract StakeContract is ReentrancyGuard, Ownable {
     plus the stakeReward, this one must be minted
    */
   function withdraw() external nonReentrant {
-    require(lastBlockNumber != 0, "withdraw unavailable");
-    require(stakingEndTime < block.timestamp, "withdraw unavailable by timestamp");
+    require(lastBlockNumber != 0, "withdraw unavailable, stake not inited yet");
+    require(stakingEndTimestamp < block.timestamp, "withdraw unavailable by timestamp");
     require(stakers[msg.sender].balance > 0, "no balance staked");
 
     updateInternalSupply();
     
-    uint256 totalWithdraw = getWithdraw(msg.sender);
+    uint256 internalSupplyReward = getInternalSupplyReward(msg.sender);
+    uint256 totalWithdraw = internalSupplyReward + stakers[msg.sender].balance;
     uint256 stakeRewards = (stakers[msg.sender].balance * rewardToken.rewardRate()) / 100;
 
     if (rewardToken.withdrawFeeEnable()) {
@@ -115,6 +117,8 @@ contract StakeContract is ReentrancyGuard, Ownable {
       stakeRewards -= stakeRewards * rewardToken.withdrawFee() / 100;
     }
 
+    internalSupply -= internalSupplyReward;
+    totalSupply -= stakers[msg.sender].balance;
     stakers[msg.sender].balance = 0;
     totalStakers -= 1;
 
