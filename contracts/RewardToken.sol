@@ -26,7 +26,7 @@ contract RewardToken is ERC20, AccessControl, Ownable {
   
   constructor(uint8 _rewardRate, uint8 _withdrawFee, bool _withdrawFeeEnable) ERC20("REWARDTOKEN", "RTKN") {
     require(_rewardRate < 1000, "_rewardRate must be minor than 1000");
-    require(_withdrawFee < 1000, "withdrawFee must be minor than 1000");
+    require(_withdrawFee < 1000, "_withdrawFee must be minor than 1000");
 
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 

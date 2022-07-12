@@ -17,51 +17,34 @@ describe("RewardToken Contract", function () {
       expect(await rewardToken.withdrawFee()).to.equal(50);
       expect(await rewardToken.withdrawFeeEnable()).to.equal(true);
     });
-
-    it("Should not deploy RewardToken with invalid _rewardRate", async function () {
-      const RewardToken = await ethers.getContractFactory("RewardToken");
-
-      expect(RewardToken.deploy(1001, 50, true)).to.be.revertedWith(
-        "_rewardRate must be minor than 1000"
-      );
-    });
-
-    it("Should not deploy RewardToken with invalid _withdrawFee", async function () {
-      const RewardToken = await ethers.getContractFactory("RewardToken");
-
-      expect(RewardToken.deploy(250, 1001, true)).to.be.revertedWith(
-        "_withdrawFee must be minor than 1000"
-      );
-    });
   });
 
   describe("mint method", function () {
     it("Should mint the expected tokens to the given address", async function () {
       const rewardToken = await getDeployedContract();
+      const [, account2] = await ethers.getSigners();
 
       const mint = await rewardToken.mint(
-        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        ethers.utils.parseEther("250")
+        account2.address,
+        ethers.utils.parseEther("250000000000000000000")
       );
       await mint.wait();
 
-      expect(
-        await rewardToken.balanceOf(
-          "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-        )
-      ).to.equal(ethers.utils.parseEther("250"));
+      expect(await rewardToken.balanceOf(account2.address)).to.equal(
+        ethers.utils.parseEther("250000000000000000000")
+      );
     });
 
     it("Should not be called by other that's not the owner", async function () {
       const rewardToken = await getDeployedContract();
       const [, account2] = await ethers.getSigners();
 
-      expect(
+      await expect(
         rewardToken
           .connect(account2)
           .mint(
-            "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-            ethers.utils.parseEther("250")
+            account2.address,
+            ethers.utils.parseEther("250000000000000000000")
           )
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
@@ -92,9 +75,11 @@ describe("RewardToken Contract", function () {
       const rewardToken = await getDeployedContract();
       const [, account2] = await ethers.getSigners();
 
-      expect(
+      await expect(
         rewardToken.connect(account2).setRewardRate(255)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWith(
+        `AccessControl: account ${account2.address.toLocaleLowerCase()} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`
+      );
     });
   });
 
@@ -116,7 +101,17 @@ describe("RewardToken Contract", function () {
       expect(rewardToken.setWithdrawFee(50)).to.be.revertedWith(
         "_withdrawFee must be different"
       );
-      expect(await rewardToken.withdrawFee()).to.equal(50);
+    });
+
+    it("Should not be called by other that's not the default admin", async function () {
+      const rewardToken = await getDeployedContract();
+      const [, account2] = await ethers.getSigners();
+
+      await expect(
+        rewardToken.connect(account2).setWithdrawFee(55)
+      ).to.be.revertedWith(
+        `AccessControl: account ${account2.address.toLocaleLowerCase()} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`
+      );
     });
   });
 
@@ -138,6 +133,17 @@ describe("RewardToken Contract", function () {
         "_withdrawFeeEnable must be different"
       );
       expect(await rewardToken.withdrawFeeEnable()).to.equal(true);
+    });
+
+    it("Should not be called by other that's not the default admin", async function () {
+      const rewardToken = await getDeployedContract();
+      const [, account2] = await ethers.getSigners();
+
+      await expect(
+        rewardToken.connect(account2).setWithdrawFeeEnable(false)
+      ).to.be.revertedWith(
+        `AccessControl: account ${account2.address.toLocaleLowerCase()} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`
+      );
     });
   });
 });
