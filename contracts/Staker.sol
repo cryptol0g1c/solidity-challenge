@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
-
 import "./RewardToken.sol";
 // https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#SafeERC20
 // Security: wrapper that throw and revert on failure, allows safe calls operations 
@@ -16,7 +14,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract StakeContract is ReentrancyGuard, Ownable {
   using SafeERC20 for RewardToken;
 
-  event InitStake(uint256 _internalSupply, address by);
+  event InitStake(uint256 _internalSupply, address by, uint256 _lockSeconds, uint256 timestamp);
   event Deposit(uint256 ammount, address by, uint256 timestamp);
   event Withdraw(uint256 ammount, address by, uint256 timestamp);
   event ClaimReward(uint256 ammount, address by, uint256 timestamp);
@@ -25,12 +23,13 @@ contract StakeContract is ReentrancyGuard, Ownable {
 
   struct Staker {
     uint256 balance;
+    uint256 stakingEndTimestamp;
   }
 
   mapping (address => Staker) public stakers;
 
   uint256 private constant precision = 1e18;
-  uint256 public stakingEndTimestamp;
+  uint256 public lockSeconds;
   uint256 public lastBlockNumber;
   uint256 public totalSupply;
   uint256 public internalSupply;
@@ -40,17 +39,17 @@ contract StakeContract is ReentrancyGuard, Ownable {
     rewardToken = RewardToken(_rewardToken);
   }
 
-  function initStake(uint256 _internalSupply, uint256 _stakingEndTimestamp) external onlyOwner {
+  function initStake(uint256 _internalSupply, uint256 _lockSeconds) external onlyOwner {
     require(lastBlockNumber == 0, "stake already inited");
-    require(_stakingEndTimestamp > block.timestamp, "invalid _stakingEndTimestamp");
+    require(_lockSeconds > 0, "invalid _lockSeconds");
 
-    stakingEndTimestamp = _stakingEndTimestamp;
+    lockSeconds = _lockSeconds;
     lastBlockNumber = block.number;
     internalSupply = _internalSupply;
 
     rewardToken.mint(address(this), _internalSupply);
 
-    emit InitStake(_internalSupply, msg.sender);
+    emit InitStake(_internalSupply, msg.sender, _lockSeconds, block.timestamp);
   }
 
   /**
@@ -63,10 +62,10 @@ contract StakeContract is ReentrancyGuard, Ownable {
     }
 
     uint256 blocks = block.number - lastBlockNumber;
-    internalSupply += 100 * precision * blocks;
+    internalSupply += 100 * (10 ** rewardToken.decimals()) * blocks;
     lastBlockNumber = block.number;
 
-    rewardToken.mint(address(this), 100 * precision * blocks);
+    rewardToken.mint(address(this), 100 * (10 ** rewardToken.decimals()) * blocks);
   }
 
   function deposit(uint256 ammount) external nonReentrant {
@@ -79,6 +78,7 @@ contract StakeContract is ReentrancyGuard, Ownable {
 
     totalSupply += ammount;
     stakers[msg.sender].balance += ammount;
+    stakers[msg.sender].stakingEndTimestamp = block.timestamp + lockSeconds;
 
     updateInternalSupply();
 
@@ -104,7 +104,7 @@ contract StakeContract is ReentrancyGuard, Ownable {
    */
   function withdraw() external nonReentrant {
     require(lastBlockNumber != 0, "withdraw unavailable, stake not inited yet");
-    require(stakingEndTimestamp < block.timestamp, "withdraw unavailable by timestamp");
+    require(stakers[msg.sender].stakingEndTimestamp < block.timestamp, "withdraw unavailable by timestamp");
     require(stakers[msg.sender].balance > 0, "no balance staked");
 
     updateInternalSupply();
@@ -126,6 +126,6 @@ contract StakeContract is ReentrancyGuard, Ownable {
     rewardToken.mint(address(this), stakeRewards);
     rewardToken.safeTransfer(msg.sender, totalWithdraw + stakeRewards);
 
-    emit Withdraw(totalWithdraw, msg.sender, block.timestamp);
+    emit Withdraw(totalWithdraw + stakeRewards, msg.sender, block.timestamp);
   }
 }

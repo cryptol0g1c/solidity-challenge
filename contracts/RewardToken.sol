@@ -35,7 +35,7 @@ contract RewardToken is ERC20, AccessControl, Ownable {
     withdrawFeeEnable = _withdrawFeeEnable;
   }
 
-  function mint(address to, uint256 supply) external onlyOwner {
+  function mint(address to, uint supply) external onlyOwner {
     _mint(to, supply);
 
     emit Mint(to, supply);
