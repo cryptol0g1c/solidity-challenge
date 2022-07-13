@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract StakeContract is ReentrancyGuard, Ownable {
+contract Staker is ReentrancyGuard, Ownable {
   using SafeERC20 for RewardToken;
 
   event InitStake(uint256 _internalSupply, address by, uint256 _lockSeconds, uint256 timestamp);
@@ -21,14 +21,13 @@ contract StakeContract is ReentrancyGuard, Ownable {
 
   RewardToken public immutable rewardToken;
 
-  struct Staker {
+  struct StakerInfo {
     uint256 balance;
     uint256 stakingEndTimestamp;
   }
 
-  mapping (address => Staker) public stakers;
+  mapping (address => StakerInfo) public stakers;
 
-  uint256 private constant precision = 1e18;
   uint256 public lockSeconds;
   uint256 public lastBlockNumber;
   uint256 public totalSupply;
